@@ -44,7 +44,7 @@
 	    usleep(100*1000);
 	}
 	
-	for(int i = 0; i <0; i++)
+	for(int i = 0; i < 0; i++)
 	{
 	    try 
 	    {
@@ -56,7 +56,7 @@
 		return -1;
 	    }
 	    
-	    msg.initialPose.x = 35-2*i;
+	    msg.initialPose.x = 35-5*i;
 	    msg.initialPose.y = 8;
 	    msg.initialPose.theta = M_PI;
 	

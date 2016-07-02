@@ -56,14 +56,14 @@ void supervisor::AssignGoal()
     robots[1].ref.y=2;
     robots[1].ref.theta=0;
     
-//     robots[2].ref.x=35;
-//     robots[2].ref.y=4;
-//     robots[2].ref.theta=0;
-//     
-//     robots[3].ref.x=35;
-//     robots[3].ref.y=4;
-//     robots[3].ref.theta=0;
-//     
+    robots[2].ref.x=5;
+    robots[2].ref.y=8;
+    robots[2].ref.theta=M_PI;
+    
+    robots[3].ref.x=5;
+    robots[3].ref.y=8;
+    robots[3].ref.theta=M_PI;
+    
 //     robots[4].ref.x=35;
 //     robots[4].ref.y=4;
 //     robots[4].ref.theta=0;
@@ -110,7 +110,7 @@ double supervisor::LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose
 
 Force2D supervisor::WallRepulsion(geometry_msgs::Pose2D current)
 {
-    double kfr=10;
+    double kfr=1;
     Force2D fr;
     fr.fx=0;
     fr.fy=kfr/(current.y-wall2) + kfr/(current.y-wall1);
@@ -148,8 +148,6 @@ void supervisor::run()
 
     while (ros::ok())
     {
-	ReadPoses();
-
 	for(int i=0; i<n; i++)	//twist
 	{
 	    ReadPoses();
@@ -168,10 +166,10 @@ void supervisor::run()
 
 	    for(int j=0; j<n; j++)
 	    {
-		if(i<j && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2.5)
+		if(i<j && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
 		{
-		    robots[i].twist.linear.x=0;
-		    robots[i].twist.angular.x=0;
+		    robots[i].twist.linear.x = 0;
+		    robots[i].twist.angular.z = robots[i].twist.angular.z;
 		}
 		else
 		{
