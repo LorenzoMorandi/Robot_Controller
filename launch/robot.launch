@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="robot_name"/>
+    <arg name="pose"/>
+	
+    <!--spawn robot-->
+    <node pkg="stdr_robot" type="robot_handler" name="$(arg robot_name)" args="add $(find robot_controller)/robots/simple_robot.xml $(arg pose)"/>
+</launch>

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+	<!--load manager-->
+	<node pkg="nodelet" type="nodelet" name="robot_manager"  args="manager"/>
+	
+	<!--load server with map-->
+	<node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(find robot_controller)/maps/road.yaml"/>
+	<node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
+	
+	<!--load gui-->
+	<node name="$(anon stdr_gui_node)" pkg="stdr_gui" type="stdr_gui_node"/>
+	
+	<!--spawn robots-->
+	<node name="spawner" pkg="robot_controller" type="spawn_robot"/>
+</launch>
