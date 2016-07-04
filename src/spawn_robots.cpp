@@ -44,7 +44,7 @@
 	    usleep(100*1000);
 	}
 	
-	for(int i = 0; i < 0; i++)
+	for(int i = 0; i < 2; i++)
 	{
 	    try 
 	    {
@@ -56,9 +56,9 @@
 		return -1;
 	    }
 	    
-	    msg.initialPose.x = 35-5*i;
+	    msg.initialPose.x = 5*i+5;
 	    msg.initialPose.y = 8;
-	    msg.initialPose.theta = M_PI;
+	    msg.initialPose.theta = 0;
 	
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;

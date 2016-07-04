@@ -56,13 +56,13 @@ void supervisor::AssignGoal()
     robots[1].ref.y=2;
     robots[1].ref.theta=0;
     
-    robots[2].ref.x=5;
+    robots[2].ref.x=35;
     robots[2].ref.y=8;
-    robots[2].ref.theta=M_PI;
+    robots[2].ref.theta=0;
     
-    robots[3].ref.x=5;
+    robots[3].ref.x=35;
     robots[3].ref.y=8;
-    robots[3].ref.theta=M_PI;
+    robots[3].ref.theta=0;
     
 //     robots[4].ref.x=35;
 //     robots[4].ref.y=4;
@@ -119,7 +119,7 @@ Force2D supervisor::WallRepulsion(geometry_msgs::Pose2D current)
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 2);
+    pnh.param<int>("robot_number", n, 4);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name="robot";
     
@@ -143,7 +143,7 @@ void supervisor::init()
 
 void supervisor::run()
 {
-    ros::Rate loop_rate(5);
+    ros::Rate loop_rate(30);
     ROS_INFO_STREAM("START SUPERVISOR");
 
     while (ros::ok())
@@ -164,20 +164,17 @@ void supervisor::run()
 
 	    //potenziale attrattivo dipende da i
 
+	    robots[i].twist.linear.x = 0.1*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
+	    robots[i].twist.angular.z = 0.5*(atan2(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta);
+	    
 	    for(int j=0; j<n; j++)
 	    {
 		if(i<j && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
 		{
 		    robots[i].twist.linear.x = 0;
-		    robots[i].twist.angular.z = robots[i].twist.angular.z;
+		    robots[i].twist.angular.z = 0;
 		}
-		else
-		{
-		    robots[i].twist.linear.x = 0.1*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
-		    robots[i].twist.angular.z = 0.5*(atan2(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta);
-		}
-	    }
-	    
+	    }    
 	}
 	
 	for(int i=0; i<n; i++)
