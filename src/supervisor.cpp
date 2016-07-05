@@ -148,10 +148,10 @@ void supervisor::run()
 
     while (ros::ok())
     {
+	ReadPoses();
+
 	for(int i=0; i<n; i++)	//twist
 	{
-	    ReadPoses();
-
 	    Force2D fa, fwall;
 	    fa.fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
 	    fa.fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
@@ -174,7 +174,7 @@ void supervisor::run()
 		    robots[i].twist.linear.x = 0;
 		    robots[i].twist.angular.z = 0;
 		}
-	    }    
+	    }
 	}
 	
 	for(int i=0; i<n; i++)
