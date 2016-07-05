@@ -37,7 +37,8 @@
 		namedRobot = handler.spawnNewRobot(msg);
 // 		return 0;
 	    }
-	    catch (stdr_robot::ConnectionException& ex) {
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
 		ROS_ERROR("%s", ex.what());
 // 		return -1;
 	    }
@@ -57,7 +58,7 @@
 	    }
 	    
 	    msg.initialPose.x = 5*i+5;
-	    msg.initialPose.y = 8;
+	    msg.initialPose.y = 4;
 	    msg.initialPose.theta = 0;
 	
 	
@@ -68,7 +69,72 @@
 		namedRobot = handler.spawnNewRobot(msg);
 // 		return 0;
 	    }
-	    catch (stdr_robot::ConnectionException& ex) {
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+// 		return -1;
+	    }
+	    usleep(100*1000);
+	}
+	
+	for(int i = 0; i < 2; i++)
+	{
+	    try 
+	    {
+		msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	    }
+	    catch(stdr_parser::ParserException& ex)
+	    {
+		ROS_ERROR("[STDR_PARSER] %s", ex.what());
+		return -1;
+	    }
+	    
+	    msg.initialPose.x = 35-5*i;
+	    msg.initialPose.y = 8;
+	    msg.initialPose.theta = M_PI;
+	
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+// 		return 0;
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+// 		return -1;
+	    }
+	    usleep(100*1000);
+	}
+	    
+	for(int i = 0; i < 2; i++)
+	{
+	    try 
+	    {
+		msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	    }
+	    catch(stdr_parser::ParserException& ex)
+	    {
+		ROS_ERROR("[STDR_PARSER] %s", ex.what());
+		return -1;
+	    }
+	    
+	    msg.initialPose.x = 35-5*i;
+	    msg.initialPose.y = 10;
+	    msg.initialPose.theta = M_PI;
+	
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+// 		return 0;
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
 		ROS_ERROR("%s", ex.what());
 // 		return -1;
 	    }

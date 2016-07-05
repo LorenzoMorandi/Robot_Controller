@@ -57,29 +57,29 @@ void supervisor::AssignGoal()
     robots[1].ref.theta=0;
     
     robots[2].ref.x=35;
-    robots[2].ref.y=8;
+    robots[2].ref.y=2;
     robots[2].ref.theta=0;
     
     robots[3].ref.x=35;
-    robots[3].ref.y=8;
+    robots[3].ref.y=2;
     robots[3].ref.theta=0;
     
-//     robots[4].ref.x=35;
-//     robots[4].ref.y=4;
-//     robots[4].ref.theta=0;
-//     
-//     robots[5].ref.x=5;
-//     robots[5].ref.y=8;
-//     robots[5].ref.theta=0;
-//     
-//     robots[6].ref.x=5;
-//     robots[6].ref.y=8;
-//     robots[6].ref.theta=0;
-//     
-//     robots[7].ref.x=5;
-//     robots[7].ref.y=8;
-//     robots[7].ref.theta=0;
-//     
+    robots[4].ref.x=5;
+    robots[4].ref.y=8;
+    robots[4].ref.theta=M_PI;
+    
+    robots[5].ref.x=5;
+    robots[5].ref.y=8;
+    robots[5].ref.theta=M_PI;
+    
+    robots[6].ref.x=5;
+    robots[6].ref.y=8;
+    robots[6].ref.theta=M_PI;
+    
+    robots[7].ref.x=5;
+    robots[7].ref.y=8;
+    robots[7].ref.theta=M_PI;
+    
 //     robots[8].ref.x=5;
 //     robots[8].ref.y=8;
 //     robots[8].ref.theta=0;
@@ -89,14 +89,14 @@ void supervisor::AssignGoal()
 //     robots[9].ref.theta=0;
 }
 
-double supervisor::AngularErr(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
-{
-    double err_x = reference.x - current.x;
-    double err_y = reference.y - current.y;
-    double ref_theta = atan2(err_y, err_x);
-
-    return  ref_theta - current.theta;
-}
+// double supervisor::AngularErr(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
+// {
+//     double err_x = reference.x - current.x;
+//     double err_y = reference.y - current.y;
+//     double ref_theta = atan2(err_y, err_x);
+// 
+//     return  ref_theta - current.theta;
+// }
 
 double supervisor::LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
 {
@@ -108,18 +108,18 @@ double supervisor::LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose
     return  reference.x-current.x;
 }
 
-Force2D supervisor::WallRepulsion(geometry_msgs::Pose2D current)
-{
-    double kfr=1;
-    Force2D fr;
-    fr.fx=0;
-    fr.fy=kfr/(current.y-wall2) + kfr/(current.y-wall1);
-}
+// Force2D supervisor::WallRepulsion(geometry_msgs::Pose2D current)
+// {
+//     double kfr=1;
+//     Force2D fr;
+//     fr.fx=0;
+//     fr.fy=kfr/(current.y-wall2) + kfr/(current.y-wall1);
+// }
 
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 4);
+    pnh.param<int>("robot_number", n, 8);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name="robot";
     
@@ -152,27 +152,84 @@ void supervisor::run()
 
 	for(int i=0; i<n; i++)	//twist
 	{
-	    Force2D fa, fwall;
-	    fa.fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
-	    fa.fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
-	    fwall=WallRepulsion(robots[i].curr_pose);
-	    
-	    robots[i].fris.fx = fa.fx;// + fwall.fx;
-	    robots[i].fris.fy = fa.fy;// + fwall.fy;
-	    
-//     ROS_INFO_STREAM("wall: "<<fwall.fy << "ris: " <<robots[i].fris.fy);
+	    if(robots[i].curr_pose.y < 6)
+	    {
+		Force2D fa;   //fwall;
+		fa.fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
+		fa.fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
+    // 	    fwall=WallRepulsion(robots[i].curr_pose);
+		
+		robots[i].fris.fx = fa.fx;// + fwall.fx;
+		robots[i].fris.fy = fa.fy;// + fwall.fy;
+		
+    //     ROS_INFO_STREAM("wall: "<<fwall.fy << "ris: " <<robots[i].fris.fy);
 
-	    //potenziale attrattivo dipende da i
+		//potenziale attrattivo dipende da i
 
-	    robots[i].twist.linear.x = 0.1*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
-	    robots[i].twist.angular.z = 0.5*(atan2(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta);
+		robots[i].twist.linear.x = 0.1*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
+		robots[i].twist.angular.z = 0.5*(atan2(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta);
+	    }
+	    else
+	    {
+		Force2D fa;   //fwall;
+		fa.fx=LinearErrX(robots[i].ref, robots[i].curr_pose);
+		fa.fy=LinearErrY(robots[i].ref, robots[i].curr_pose);
+    // 	    fwall=WallRepulsion(robots[i].curr_pose);
+		
+		robots[i].fris.fx = -fa.fx;// + fwall.fx;
+		robots[i].fris.fy = fa.fy;// + fwall.fy;
+		
+    //     ROS_INFO_STREAM("wall: "<<fwall.fy << "ris: " <<robots[i].fris.fy);
+
+		//potenziale attrattivo dipende da i
+
+		robots[i].twist.linear.x = 0.1*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
+		robots[i].twist.angular.z = 0.0;
+
+// 		robots[i].twist.angular.z = -0.5*(-atan2(robots[i].fris.fy,robots[i].fris.fx)+(robots[i].curr_pose.theta));
+	    }
 	    
 	    for(int j=0; j<n; j++)
 	    {
-		if(i<j && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
+		if(robots[j].curr_pose.y < 6 && robots[i].curr_pose.y < 6)
 		{
-		    robots[i].twist.linear.x = 0;
-		    robots[i].twist.angular.z = 0;
+		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
+		    {
+			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
+			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
+		    }
+		    
+		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
+		    {
+			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
+			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
+		    }
+		    
+		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
+		    {
+			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
+			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
+		    }
+		}
+		else
+		{
+		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
+		    {
+			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
+			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
+		    }
+		    
+		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
+		    {
+			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
+			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
+		    }
+		    
+		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
+		    {
+			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
+			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
+		    }
 		}
 	    }
 	}

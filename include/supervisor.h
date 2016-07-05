@@ -45,11 +45,11 @@ private:
     tf::TransformListener listener;
     
     int n;
-    double kp1 = 1;
-    double kp2 = 0.1;
-    
-    double wall1 = 0.8382;
-    double wall2 = 6.477;
+//     double kp1 = 1;
+//     double kp2 = 0.1;
+//     
+//     double wall1 = 0.8382;
+//     double wall2 = 6.477;
 
 
 
@@ -57,10 +57,10 @@ private:
     void SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg);
     void ReadPoses();
     void AssignGoal();
-    double AngularErr(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
+//     double AngularErr(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
     double LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
     double LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
-    Force2D WallRepulsion(geometry_msgs::Pose2D current);
+//     Force2D WallRepulsion(geometry_msgs::Pose2D current);
     
     
 public:
