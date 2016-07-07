@@ -48,37 +48,37 @@ void supervisor::AssignGoal()
 // 	robots[i].ref.y=
 // 	robots[i].ref.theta=
     }
-    robots[0].ref.x=35;
+    robots[0].ref.x=37;
     robots[0].ref.y=2;
     robots[0].ref.theta=0;
     
-    robots[1].ref.x=35;
+    robots[1].ref.x=37;
     robots[1].ref.y=2;
     robots[1].ref.theta=0;
     
-    robots[2].ref.x=35;
-    robots[2].ref.y=2;
+    robots[2].ref.x=37;
+    robots[2].ref.y=4;
     robots[2].ref.theta=0;
     
-    robots[3].ref.x=35;
-    robots[3].ref.y=2;
+    robots[3].ref.x=37;
+    robots[3].ref.y=4;
     robots[3].ref.theta=0;
     
-    robots[4].ref.x=5;
+    robots[4].ref.x=3;
     robots[4].ref.y=8;
-    robots[4].ref.theta=M_PI;
+    robots[4].ref.theta=0;
     
-    robots[5].ref.x=5;
+    robots[5].ref.x=3;
     robots[5].ref.y=8;
-    robots[5].ref.theta=M_PI;
+    robots[5].ref.theta=0;
     
-    robots[6].ref.x=5;
-    robots[6].ref.y=8;
-    robots[6].ref.theta=M_PI;
+    robots[6].ref.x=3;
+    robots[6].ref.y=10;
+    robots[6].ref.theta=0;
     
-    robots[7].ref.x=5;
-    robots[7].ref.y=8;
-    robots[7].ref.theta=M_PI;
+    robots[7].ref.x=3;
+    robots[7].ref.y=10;
+    robots[7].ref.theta=0;
     
 //     robots[8].ref.x=5;
 //     robots[8].ref.y=8;
@@ -152,43 +152,22 @@ void supervisor::run()
 
 	for(int i=0; i<n; i++)	//twist
 	{
-	    if(robots[i].curr_pose.y < 6)
-	    {
-		Force2D fa;   //fwall;
-		fa.fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
-		fa.fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
-    // 	    fwall=WallRepulsion(robots[i].curr_pose);
-		
-		robots[i].fris.fx = fa.fx;// + fwall.fx;
-		robots[i].fris.fy = fa.fy;// + fwall.fy;
-		
-    //     ROS_INFO_STREAM("wall: "<<fwall.fy << "ris: " <<robots[i].fris.fy);
 
-		//potenziale attrattivo dipende da i
-
-		robots[i].twist.linear.x = 0.1*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
-		robots[i].twist.angular.z = 0.5*(atan2(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta);
-	    }
-	    else
-	    {
-		Force2D fa;   //fwall;
-		fa.fx=LinearErrX(robots[i].ref, robots[i].curr_pose);
-		fa.fy=LinearErrY(robots[i].ref, robots[i].curr_pose);
-    // 	    fwall=WallRepulsion(robots[i].curr_pose);
-		
-		robots[i].fris.fx = -fa.fx;// + fwall.fx;
-		robots[i].fris.fy = fa.fy;// + fwall.fy;
-		
-    //     ROS_INFO_STREAM("wall: "<<fwall.fy << "ris: " <<robots[i].fris.fy);
-
-		//potenziale attrattivo dipende da i
-
-		robots[i].twist.linear.x = 0.1*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
-		robots[i].twist.angular.z = 0.0;
-
-// 		robots[i].twist.angular.z = -0.5*(-atan2(robots[i].fris.fy,robots[i].fris.fx)+(robots[i].curr_pose.theta));
-	    }
+	    Force2D fa;   //fwall;
+	    fa.fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
+	    fa.fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
+	    robots[i].fris.fx = fa.fx;// + fwall.fx;
+	    robots[i].fris.fy = fa.fy;// + fwall.fy;
 	    
+	    double err_ang=atan2f(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta;
+	    
+	    if(fabs(sin(err_ang)) < 0.1)
+		robots[i].twist.linear.x = 0.2*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
+	    else
+		robots[i].twist.linear.x = 0;
+
+	    robots[i].twist.angular.z = 2*sin(err_ang);
+
 	    for(int j=0; j<n; j++)
 	    {
 		if(robots[j].curr_pose.y < 6 && robots[i].curr_pose.y < 6)
