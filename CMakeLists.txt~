@@ -157,8 +157,8 @@ add_executable(spawn_robots_cross src/spawn_robots_cross.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_controller_node ${catkin_LIBRARIES})
 target_link_libraries(supervisor ${catkin_LIBRARIES})
-target_link_libraries(spawn_robots_road ${catkin_LIBRARIES} stdr_handle_robot)
-target_link_libraries(spawn_robots_cross ${catkin_LIBRARIES} stdr_handle_robot)
+target_link_libraries(spawn_robot_road ${catkin_LIBRARIES} stdr_handle_robot)
+target_link_libraries(spawn_robot_cross ${catkin_LIBRARIES} stdr_handle_robot)
 
 
 #############

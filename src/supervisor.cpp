@@ -11,8 +11,12 @@ supervisor::~supervisor()
     {
 	robots[i].twist.linear.x = 0.0;
 	robots[i].twist.angular.z = 0.0;
+    }   
+    
+    for(int i=0; i<n; i++)
 	controller_pubs[i].publish(robots[i].twist);
-    }    
+    
+    ros::spin();
 }
 
 void supervisor::ReadPoses()
@@ -43,18 +47,46 @@ void supervisor::SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg)
 
 void supervisor::AssignGoal()
 {
+//     for(int i=0; i<n; i++)
+//     {
+// 	if(i<4)
+// 	{
+// 	    robots[i].ref.x=37;
+// 	    robots[i].ref.y=3;
+// 	    robots[i].ref.theta=0;
+// 	}
+// 	else
+// 	{
+// 	    robots[i].ref.x=3;
+// 	    robots[i].ref.y=9;
+// 	    robots[i].ref.theta=0;
+// 	}
+//     }
+    
     for(int i=0; i<n; i++)
     {
-	if(i<4)
+	if(i==0)
 	{
 	    robots[i].ref.x=37;
-	    robots[i].ref.y=3;
+	    robots[i].ref.y=17;
 	    robots[i].ref.theta=0;
 	}
-	else
+	if(i==1)
+	{
+	    robots[i].ref.x=23;
+	    robots[i].ref.y=37;
+	    robots[i].ref.theta=0;
+	}
+	if(i==2)
 	{
 	    robots[i].ref.x=3;
-	    robots[i].ref.y=9;
+	    robots[i].ref.y=23;
+	    robots[i].ref.theta=0;
+	}
+	if(i==3)
+	{
+	    robots[i].ref.x=17;
+	    robots[i].ref.y=3;
 	    robots[i].ref.theta=0;
 	}
     }
@@ -90,7 +122,7 @@ double supervisor::LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 8);
+    pnh.param<int>("robot_number", n, 4);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name="robot";
     
@@ -133,7 +165,7 @@ void supervisor::run()
 	    double err_ang = atan2f(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta;
 	    double err_lin = sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
 	    
-	    if(fabs(err_ang) < 0.1)
+	    if(fabs(sin(err_ang)) < 0.05)
 		robots[i].twist.linear.x = 0.5*err_lin;
 	    else
 		robots[i].twist.linear.x = 0;
@@ -142,47 +174,82 @@ void supervisor::run()
 
 	    for(int j=0; j<n; j++)
 	    {
-		if(robots[j].curr_pose.y < 6 && robots[i].curr_pose.y < 6)
+		if((i<j || i>j) && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 8)
+		    {
+			    robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
+			    robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
+		    }
+		    
+		if((i<j || i>j) && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 7)
+		    {
+			if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
+			{
+			    robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
+			    robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
+			}
+			else
+			{
+			    robots[i].twist.linear.x = 5*robots[i].twist.linear.x;
+			    robots[i].twist.angular.z = 5*robots[i].twist.angular.x;
+			}
+		    }
+		    
+		if((i<j || i>j) && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 5)
 		{
-		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
+		    if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
 		    {
-			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
-			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
+			robots[i].twist.linear.x = 0;
+			robots[i].twist.angular.z = 0;
 		    }
-		    
-		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
+		    else
 		    {
-			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
-			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
-		    }
-		    
-		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
-		    {
-			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
-			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
-		    }
-		}
-		else
-		{
-		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
-		    {
-			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
-			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
-		    }
-		    
-		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
-		    {
-			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
-			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
-		    }
-		    
-		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
-		    {
-			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
-			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
+			robots[i].twist.linear.x = 5*robots[i].twist.linear.x;
+			robots[i].twist.angular.z = 5*robots[i].twist.angular.x;
 		    }
 		}
 	    }
+	    
+// 		if(robots[j].curr_pose.y < 6 && robots[i].curr_pose.y < 6)
+// 		{
+// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
+// 		    {
+// 			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
+// 			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
+// 		    }
+// 		    
+// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
+// 		    {
+// 			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
+// 			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
+// 		    }
+// 		    
+// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
+// 		    {
+// 			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
+// 			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
+// 		    }
+// 		}
+// 		else
+// 		{
+// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
+// 		    {
+// 			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
+// 			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
+// 		    }
+// 		    
+// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
+// 		    {
+// 			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
+// 			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
+// 		    }
+// 		    
+// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
+// 		    {
+// 			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
+// 			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
+// 		    }
+// 		}
+// 	    }
 	}
 	
 	for(int i=0; i<n; i++)
