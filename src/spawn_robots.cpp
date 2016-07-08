@@ -40,12 +40,11 @@
 	    try 
 	    {
 		namedRobot = handler.spawnNewRobot(msg);
-// 		return 0;
 	    }
 	    catch (stdr_robot::ConnectionException& ex) 
 	    {
 		ROS_ERROR("%s", ex.what());
-// 		return -1;
+		return -1;
 	    }
 	    usleep(100*1000);
 	}
@@ -72,12 +71,11 @@
 	    try 
 	    {
 		namedRobot = handler.spawnNewRobot(msg);
-// 		return 0;
 	    }
 	    catch (stdr_robot::ConnectionException& ex) 
 	    {
 		ROS_ERROR("%s", ex.what());
-// 		return -1;
+		return -1;
 	    }
 	    usleep(100*1000);
 	}
@@ -104,12 +102,11 @@
 	    try 
 	    {
 		namedRobot = handler.spawnNewRobot(msg);
-// 		return 0;
 	    }
 	    catch (stdr_robot::ConnectionException& ex) 
 	    {
 		ROS_ERROR("%s", ex.what());
-// 		return -1;
+		return -1;
 	    }
 	    usleep(100*1000);
 	}
@@ -137,12 +134,11 @@
 	    try 
 	    {
 		namedRobot = handler.spawnNewRobot(msg);
-// 		return 0;
 	    }
 	    catch (stdr_robot::ConnectionException& ex) 
 	    {
 		ROS_ERROR("%s", ex.what());
-// 		return -1;
+		return -1;
 	    }
 	    usleep(100*1000);
 	}

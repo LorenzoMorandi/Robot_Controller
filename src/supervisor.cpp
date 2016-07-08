@@ -12,7 +12,7 @@ supervisor::~supervisor()
 	robots[i].twist.linear.x = 0.0;
 	robots[i].twist.angular.z = 0.0;
 	controller_pubs[i].publish(robots[i].twist);
-    }
+    }    
 }
 
 void supervisor::ReadPoses()
@@ -35,6 +35,7 @@ void supervisor::ReadPoses()
     }
 }
 
+
 void supervisor::SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg)
 {
 //TODO
@@ -44,49 +45,19 @@ void supervisor::AssignGoal()
 {
     for(int i=0; i<n; i++)
     {
-// 	robots[i].ref.x=
-// 	robots[i].ref.y=
-// 	robots[i].ref.theta=
+	if(i<4)
+	{
+	    robots[i].ref.x=37;
+	    robots[i].ref.y=3;
+	    robots[i].ref.theta=0;
+	}
+	else
+	{
+	    robots[i].ref.x=3;
+	    robots[i].ref.y=9;
+	    robots[i].ref.theta=0;
+	}
     }
-    robots[0].ref.x=37;
-    robots[0].ref.y=2;
-    robots[0].ref.theta=0;
-    
-    robots[1].ref.x=37;
-    robots[1].ref.y=2;
-    robots[1].ref.theta=0;
-    
-    robots[2].ref.x=37;
-    robots[2].ref.y=4;
-    robots[2].ref.theta=0;
-    
-    robots[3].ref.x=37;
-    robots[3].ref.y=4;
-    robots[3].ref.theta=0;
-    
-    robots[4].ref.x=3;
-    robots[4].ref.y=8;
-    robots[4].ref.theta=0;
-    
-    robots[5].ref.x=3;
-    robots[5].ref.y=8;
-    robots[5].ref.theta=0;
-    
-    robots[6].ref.x=3;
-    robots[6].ref.y=10;
-    robots[6].ref.theta=0;
-    
-    robots[7].ref.x=3;
-    robots[7].ref.y=10;
-    robots[7].ref.theta=0;
-    
-//     robots[8].ref.x=5;
-//     robots[8].ref.y=8;
-//     robots[8].ref.theta=0;
-//     
-//     robots[9].ref.x=5;
-//     robots[9].ref.y=8;
-//     robots[9].ref.theta=0;
 }
 
 // double supervisor::AngularErr(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
@@ -159,10 +130,11 @@ void supervisor::run()
 	    robots[i].fris.fx = fa.fx;// + fwall.fx;
 	    robots[i].fris.fy = fa.fy;// + fwall.fy;
 	    
-	    double err_ang=atan2f(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta;
+	    double err_ang = atan2f(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta;
+	    double err_lin = sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
 	    
-	    if(fabs(sin(err_ang)) < 0.1)
-		robots[i].twist.linear.x = 0.2*sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
+	    if(fabs(err_ang) < 0.1)
+		robots[i].twist.linear.x = 0.5*err_lin;
 	    else
 		robots[i].twist.linear.x = 0;
 
