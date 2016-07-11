@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<launch>
+    
+    <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_controller)/maps/cross.yaml"/>
+    
+    <param name="robot_description" command="$(find xacro)/xacro.py $(find robot_controller)/model/car.urdf.xacro" />
+    <param name="publish_frequency" value="100"/>
+    
+    
+    <node name="robot_state_publisher0" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot0"/>
+    </node>
+    <node name="robot0_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot0 /robot0/base 1000"/>
+
+    <node name="robot_state_publishe1" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot1"/>
+    </node>
+    <node name="robot1_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot1 /robot1/base 1000"/>
+    
+    <node name="robot_state_publishe2" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot2"/>
+    </node>
+    <node name="robot2_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot2 /robot2/base 1000"/>
+    
+    <node name="robot_state_publishe3" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot3"/>
+    </node>
+    <node name="robot3_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot3 /robot3/base 1000"/>
+    
+    <node name="robot_state_publisher4" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot4"/>
+    </node>
+    <node name="robot4_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot4 /robot4/base 1000"/>
+
+    <node name="robot_state_publishe5" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot5"/>
+    </node>
+    <node name="robot5_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot5 /robot5/base 1000"/>
+    
+    <node name="robot_state_publishe6" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot6"/>
+    </node>
+    <node name="robot6_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot6 /robot6/base 1000"/>
+    
+    <node name="robot_state_publishe7" pkg="robot_state_publisher" type="robot_state_publisher">
+	<param name="tf_prefix" value="robot7"/>
+    </node>
+    <node name="robot7_tf" type="static_transform_publisher" pkg="tf" args="0 0 0 0 0 0 /robot7 /robot7/base 1000"/>
+    
+    <node name="rviz" pkg="rviz" type="rviz" respawn="false" args="-d $(find robot_controller)/launch/rviz_view.rviz" output="screen"/> 
+
+</launch>

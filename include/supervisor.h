@@ -26,6 +26,7 @@ struct Robot
     double err_ang;
     double err_lin_x;
     double err_lin_y;
+    std::string state;
     Force2D fris;
 };
 

@@ -65,25 +65,25 @@ void supervisor::AssignGoal()
     
     for(int i=0; i<n; i++)
     {
-	if(i==0)
+	if(i==0 || i==1)
 	{
 	    robots[i].ref.x=37;
 	    robots[i].ref.y=17;
 	    robots[i].ref.theta=0;
 	}
-	if(i==1)
+	if(i==2 || i==3)
 	{
 	    robots[i].ref.x=23;
 	    robots[i].ref.y=37;
 	    robots[i].ref.theta=0;
 	}
-	if(i==2)
+	if(i==4 || i==5)
 	{
 	    robots[i].ref.x=3;
 	    robots[i].ref.y=23;
 	    robots[i].ref.theta=0;
 	}
-	if(i==3)
+	if(i==6 || i==7)
 	{
 	    robots[i].ref.x=17;
 	    robots[i].ref.y=3;
@@ -122,7 +122,7 @@ double supervisor::LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 4);
+    pnh.param<int>("robot_number", n, 8);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name="robot";
     
@@ -133,6 +133,7 @@ void supervisor::init()
 	tmp.err_ang=0.0;
 	tmp.err_lin_x=0.0;
 	tmp.err_lin_y=0.0;
+	tmp.state="MOVE";
 	robots.push_back(tmp);
 	
 	ros::Publisher tmp_pub;
@@ -156,58 +157,101 @@ void supervisor::run()
 	for(int i=0; i<n; i++)	//twist
 	{
 
-	    Force2D fa;   //fwall;
+	    Force2D fa;  
 	    fa.fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
 	    fa.fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
-	    robots[i].fris.fx = fa.fx;// + fwall.fx;
-	    robots[i].fris.fy = fa.fy;// + fwall.fy;
+	    robots[i].fris.fx = fa.fx;
+	    robots[i].fris.fy = fa.fy;
 	    
-	    double err_ang = atan2f(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta;
+	    double err_ang = atan2(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta;
 	    double err_lin = sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
 	    
-	    if(fabs(sin(err_ang)) < 0.05)
-		robots[i].twist.linear.x = 0.5*err_lin;
+	    if(fabs(sin(err_ang)) < 0.08)
+		robots[i].twist.linear.x = 0.25*err_lin;	//MOVE
 	    else
-		robots[i].twist.linear.x = 0;
+		robots[i].twist.linear.x = 0;	//ROTATE ONLY
 
-	    robots[i].twist.angular.z = 2*sin(err_ang);
+	    robots[i].twist.angular.z = 2*sin(err_ang);	//ROTATE
 
 	    for(int j=0; j<n; j++)
 	    {
-		if((i<j || i>j) && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 8)
-		    {
-			    robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
-			    robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
-		    }
-		    
-		if((i<j || i>j) && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 7)
-		    {
-			if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
-			{
-			    robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
-			    robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
-			}
-			else
-			{
-			    robots[i].twist.linear.x = 5*robots[i].twist.linear.x;
-			    robots[i].twist.angular.z = 5*robots[i].twist.angular.x;
-			}
-		    }
-		    
-		if((i<j || i>j) && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 5)
+		double gamma=atan2(robots[j].curr_pose.y-robots[i].curr_pose.y,robots[j].curr_pose.x-robots[i].curr_pose.x);
+		double theta=robots[i].curr_pose.theta;
+		double alpha=M_PI/4;
+
+		if(i!=j && fabs(fmod(theta-gamma, 2*M_PI))<alpha) //FIELD OF VIEW
 		{
-		    if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
+		    //FIRST EUCLIDEAN THRESHOLD
+		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 10)
 		    {
-			robots[i].twist.linear.x = 0;
-			robots[i].twist.angular.z = 0;
+			if(robots[j].state=="MOVE")
+			{
+			    robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
+			    robots[i].state="MOVE_SLOW";
+			}			
 		    }
-		    else
+		    
+		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 4 )
 		    {
-			robots[i].twist.linear.x = 5*robots[i].twist.linear.x;
-			robots[i].twist.angular.z = 5*robots[i].twist.angular.x;
+			    robots[i].twist.linear.x = 0.0;
+			    robots[i].state="STOP";
 		    }
+// 		    //SECOND EUCLIDEAN THRESHOLD
+// 		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 7)
+// 		    {
+// 			//ROBOT-GOAL DISTANCE COMPARE
+// 			if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
+// 			{
+// 			    robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
+// 			    robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
+// 			}
+// 			else
+// 			{
+// 			    robots[i].twist.linear.x = 2*robots[i].twist.linear.x;
+// 			    robots[i].twist.angular.z = 2*robots[i].twist.angular.z;
+// 			}
+// 		    }
+// 		    //THIRD EUCLIDEAN THRESHOLD
+// 		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 5)
+// 		    {
+// 			//ROBOT-GOAL DISTANCE COMPARE
+// 			if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
+// 			{
+// 			    robots[i].twist.linear.x = 0;
+// // 			    robots[i].twist.angular.z = 0;
+// 			}
+// 			else
+// 			{
+// 			    robots[i].twist.linear.x = 2*robots[i].twist.linear.x;
+// // 			    robots[i].twist.angular.z = 2*robots[i].twist.angular;
+// 			}
+// 		    }
+		}
+		else
+		{
+		    robots[i].state="MOVE";
+		}
+		    
+		if(fabs(fmod(theta-gamma, 2*M_PI))>alpha/2)
+		{
+		    robots[i].state="MOVE";
+		    robots[j].state="STOP";
 		}
 	    }
+
+	}
+	
+	for(int i=0; i<n; i++)
+	{
+	    controller_pubs[i].publish(robots[i].twist);
+	}   
+
+	ros::spinOnce();
+	loop_rate.sleep();
+    }
+}
+
+
 	    
 // 		if(robots[j].curr_pose.y < 6 && robots[i].curr_pose.y < 6)
 // 		{
@@ -250,14 +294,3 @@ void supervisor::run()
 // 		    }
 // 		}
 // 	    }
-	}
-	
-	for(int i=0; i<n; i++)
-	    controller_pubs[i].publish(robots[i].twist);
-
-	    
-
-	ros::spinOnce();
-	loop_rate.sleep();
-    }
-}
