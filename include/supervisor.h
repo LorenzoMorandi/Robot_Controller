@@ -11,11 +11,8 @@
 #include "math.h"
 #include <sstream>
 
-struct Force2D
-{
-    double fx;
-    double fy;
-};
+
+enum class state_machine_STATE {ROTATE_ONLY, MOVE_AND_ROTATE, MOVE_SLOW, STOP};
 
 struct Robot
 {
@@ -24,10 +21,9 @@ struct Robot
     geometry_msgs::Pose2D curr_pose;
     geometry_msgs::Pose2D ref;
     double err_ang;
-    double err_lin_x;
-    double err_lin_y;
-    std::string state;
-    Force2D fris;
+    double err_lin;
+    std::string transition;
+    state_machine_STATE state;
 };
 
 
@@ -46,22 +42,14 @@ private:
     tf::TransformListener listener;
     
     int n;
-//     double kp1 = 1;
-//     double kp2 = 0.1;
-//     
-//     double wall1 = 0.8382;
-//     double wall2 = 6.477;
-
-
 
 private:
     void SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg);
     void ReadPoses();
     void AssignGoal();
-//     double AngularErr(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
     double LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
     double LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
-//     Force2D WallRepulsion(geometry_msgs::Pose2D current);
+    bool evolve_state_machines(int i);
     
     
 public:

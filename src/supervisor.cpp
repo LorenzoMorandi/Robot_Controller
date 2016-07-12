@@ -1,5 +1,23 @@
 #include "supervisor.h"
 
+
+
+void printRobot(Robot r)
+{
+    switch(r.state)
+    {
+	case state_machine_STATE::ROTATE_ONLY: ROS_INFO_STREAM("ROTATE_ONLY"); break;
+	case state_machine_STATE::MOVE_AND_ROTATE: ROS_INFO_STREAM("MOVE_AND_ROTATE"); break;
+	case state_machine_STATE::MOVE_SLOW: ROS_INFO_STREAM("MOVE_SLOW"); break;
+	case state_machine_STATE::STOP: ROS_INFO_STREAM("STOP"); break;
+	default: ROS_INFO_STREAM("FAIL"); break;
+    }
+    ROS_INFO_STREAM(r.transition);
+}
+
+
+
+
 supervisor::supervisor():pnh("~")
 {
     n=0;
@@ -30,7 +48,6 @@ void supervisor::ReadPoses()
 	    robots[i].curr_pose.x = transform.getOrigin().getX();
 	    robots[i].curr_pose.y = transform.getOrigin().getY();
 	    robots[i].curr_pose.theta = tf::getYaw(transform.getRotation());
-// 	    ROS_WARN_STREAM(robots[i].curr_pose);
 	}
 	catch (tf::TransformException ex){
 	    ROS_ERROR("%s",ex.what());
@@ -47,21 +64,6 @@ void supervisor::SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg)
 
 void supervisor::AssignGoal()
 {
-//     for(int i=0; i<n; i++)
-//     {
-// 	if(i<4)
-// 	{
-// 	    robots[i].ref.x=37;
-// 	    robots[i].ref.y=3;
-// 	    robots[i].ref.theta=0;
-// 	}
-// 	else
-// 	{
-// 	    robots[i].ref.x=3;
-// 	    robots[i].ref.y=9;
-// 	    robots[i].ref.theta=0;
-// 	}
-//     }
     
     for(int i=0; i<n; i++)
     {
@@ -92,15 +94,6 @@ void supervisor::AssignGoal()
     }
 }
 
-// double supervisor::AngularErr(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
-// {
-//     double err_x = reference.x - current.x;
-//     double err_y = reference.y - current.y;
-//     double ref_theta = atan2(err_y, err_x);
-// 
-//     return  ref_theta - current.theta;
-// }
-
 double supervisor::LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
 {
     return  reference.y-current.y;
@@ -111,13 +104,56 @@ double supervisor::LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose
     return  reference.x-current.x;
 }
 
-// Force2D supervisor::WallRepulsion(geometry_msgs::Pose2D current)
-// {
-//     double kfr=1;
-//     Force2D fr;
-//     fr.fx=0;
-//     fr.fy=kfr/(current.y-wall2) + kfr/(current.y-wall1);
-// }
+bool supervisor::evolve_state_machines(int i)
+{
+    if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	robots[i].state = state_machine_STATE::STOP;
+	return true;
+    }
+    if(robots[i].transition == "move_rot" && robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(robots[i].transition == "near_car" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(robots[i].transition == "road_free" && robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	robots[i].state = state_machine_STATE::STOP;
+	return true;
+    }
+    if(robots[i].transition == "road_free" && robots[i].state == state_machine_STATE::STOP)
+    {
+	robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::STOP)
+    {
+	robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+
+    return false;
+}
 
 
 void supervisor::init()
@@ -131,9 +167,9 @@ void supervisor::init()
 	Robot tmp;
 	tmp.robot_name=name+std::to_string(i);
 	tmp.err_ang=0.0;
-	tmp.err_lin_x=0.0;
-	tmp.err_lin_y=0.0;
-	tmp.state="MOVE";
+	tmp.err_lin=0.0;
+	tmp.state=state_machine_STATE::MOVE_AND_ROTATE;
+	tmp.transition="stop_now";
 	robots.push_back(tmp);
 	
 	ros::Publisher tmp_pub;
@@ -147,150 +183,94 @@ void supervisor::init()
 
 void supervisor::run()
 {
-    ros::Rate loop_rate(30);
+    ros::Rate loop_rate(10);
     ROS_INFO_STREAM("START SUPERVISOR");
 
     while (ros::ok())
     {
 	ReadPoses();
 
-	for(int i=0; i<n; i++)	//twist
-	{
-
-	    Force2D fa;  
-	    fa.fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
-	    fa.fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
-	    robots[i].fris.fx = fa.fx;
-	    robots[i].fris.fy = fa.fy;
-	    
-	    double err_ang = atan2(robots[i].fris.fy,robots[i].fris.fx)-robots[i].curr_pose.theta;
-	    double err_lin = sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2));
-	    
-	    if(fabs(sin(err_ang)) < 0.08)
-		robots[i].twist.linear.x = 0.25*err_lin;	//MOVE
-	    else
-		robots[i].twist.linear.x = 0;	//ROTATE ONLY
-
-	    robots[i].twist.angular.z = 2*sin(err_ang);	//ROTATE
-
-	    for(int j=0; j<n; j++)
-	    {
-		double gamma=atan2(robots[j].curr_pose.y-robots[i].curr_pose.y,robots[j].curr_pose.x-robots[i].curr_pose.x);
-		double theta=robots[i].curr_pose.theta;
-		double alpha=M_PI/4;
-
-		if(i!=j && fabs(fmod(theta-gamma, 2*M_PI))<alpha) //FIELD OF VIEW
-		{
-		    //FIRST EUCLIDEAN THRESHOLD
-		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 10)
-		    {
-			if(robots[j].state=="MOVE")
-			{
-			    robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
-			    robots[i].state="MOVE_SLOW";
-			}			
-		    }
-		    
-		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 4 )
-		    {
-			    robots[i].twist.linear.x = 0.0;
-			    robots[i].state="STOP";
-		    }
-// 		    //SECOND EUCLIDEAN THRESHOLD
-// 		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 7)
-// 		    {
-// 			//ROBOT-GOAL DISTANCE COMPARE
-// 			if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
-// 			{
-// 			    robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
-// 			    robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
-// 			}
-// 			else
-// 			{
-// 			    robots[i].twist.linear.x = 2*robots[i].twist.linear.x;
-// 			    robots[i].twist.angular.z = 2*robots[i].twist.angular.z;
-// 			}
-// 		    }
-// 		    //THIRD EUCLIDEAN THRESHOLD
-// 		    if(sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 5)
-// 		    {
-// 			//ROBOT-GOAL DISTANCE COMPARE
-// 			if(fabs(sqrt(pow(robots[i].fris.fx,2)+pow(robots[i].fris.fy,2))) > fabs(sqrt(pow(robots[j].fris.fx,2)+pow(robots[j].fris.fy,2))))
-// 			{
-// 			    robots[i].twist.linear.x = 0;
-// // 			    robots[i].twist.angular.z = 0;
-// 			}
-// 			else
-// 			{
-// 			    robots[i].twist.linear.x = 2*robots[i].twist.linear.x;
-// // 			    robots[i].twist.angular.z = 2*robots[i].twist.angular;
-// 			}
-// 		    }
-		}
-		else
-		{
-		    robots[i].state="MOVE";
-		}
-		    
-		if(fabs(fmod(theta-gamma, 2*M_PI))>alpha/2)
-		{
-		    robots[i].state="MOVE";
-		    robots[j].state="STOP";
-		}
-	    }
-
-	}
-	
 	for(int i=0; i<n; i++)
 	{
+	    double fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
+	    double fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
+	    
+	    robots[i].err_ang = atan2(fy,fx)-robots[i].curr_pose.theta;
+	    robots[i].err_lin = sqrt(pow(fx,2)+pow(fy,2));
+	    	
+	    robots[i].transition="road_free";	
+	    for(int j=0; j<n; j++)
+	    {
+		if(i!=j)
+		{
+		    double gamma=atan2(robots[j].curr_pose.y-robots[i].curr_pose.y,robots[j].curr_pose.x-robots[i].curr_pose.x);
+		    double theta=robots[i].curr_pose.theta;
+		    double alpha=M_PI/2;
+		    double dist=sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2));
+		    double angle=fabs(fmod(theta-gamma, 2*M_PI));
+		    
+		    if(fabs(sin(robots[i].err_ang)) > 0.02)
+			robots[i].transition="rot_only";
+		    else if(robots[i].state==state_machine_STATE::ROTATE_ONLY)
+			robots[i].transition="move_rot";
+// 		    else if(dist<1.1)
+// 		    {
+// 			robots[i].transition="stop_now";
+// 			break;
+// 		    }
+		    else
+		    {			
+			if(angle < alpha) 
+			{
+			    if(dist>=3 && dist<10)
+				robots[i].transition="near_car";
+			    if(dist<3)
+				robots[i].transition="stop_now";		    
+			}		    		    
+		    }
+		}
+	    }
+	}
+	
+	
+	for(int i=0; i<n; i++)	
+	{
+	    if(evolve_state_machines(i))
+	    {
+		switch(robots[i].state)
+		{
+		    case state_machine_STATE::ROTATE_ONLY: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": ROTATE_ONLY"); break;
+		    case state_machine_STATE::MOVE_AND_ROTATE: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_AND_ROTATE"); break;
+		    case state_machine_STATE::MOVE_SLOW: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_SLOW"); break;
+		    case state_machine_STATE::STOP: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": STOP"); break;
+		    default: ROS_WARN_STREAM("FAIL"); break;
+		}
+	    }
+	        
+	    if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
+	    {
+		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.linear.x = 0.0;	
+	    }
+	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+	    {
+		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.linear.x = 0.1*robots[i].err_lin;	
+	    }
+	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
+	    { 
+		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.linear.x = 0.05*robots[i].err_lin;
+	    }
+	    if(robots[i].state == state_machine_STATE::STOP)
+	    {
+		robots[i].twist.angular.z = 0.0;
+		robots[i].twist.linear.x = 0.0;	
+	    }
 	    controller_pubs[i].publish(robots[i].twist);
-	}   
+	}
 
 	ros::spinOnce();
 	loop_rate.sleep();
     }
 }
-
-
-	    
-// 		if(robots[j].curr_pose.y < 6 && robots[i].curr_pose.y < 6)
-// 		{
-// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
-// 		    {
-// 			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
-// 			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
-// 		    }
-// 		    
-// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
-// 		    {
-// 			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
-// 			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
-// 		    }
-// 		    
-// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x > 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
-// 		    {
-// 			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
-// 			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
-// 		    }
-// 		}
-// 		else
-// 		{
-// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 3)
-// 		    {
-// 			robots[i].twist.linear.x = 0.5*robots[i].twist.linear.x;
-// 			robots[i].twist.angular.z = 0.5*robots[i].twist.angular.z;
-// 		    }
-// 		    
-// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 2)
-// 		    {
-// 			robots[i].twist.linear.x = 0.2*robots[i].twist.linear.x;
-// 			robots[i].twist.angular.z = 0.2*robots[i].twist.angular.z;
-// 		    }
-// 		    
-// 		    if(robots[j].curr_pose.x-robots[i].curr_pose.x < 0 && sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2)) < 1.8)
-// 		    {
-// 			robots[i].twist.linear.x = 0.0*robots[i].twist.linear.x;
-// 			robots[i].twist.angular.z = 0.0*robots[i].twist.angular.z;
-// 		    }
-// 		}
-// 	    }
