@@ -58,7 +58,7 @@ void supervisor::ReadPoses() //Read from tf the robots position
     {
 	tf::StampedTransform transform;
 	try{
-	    listener.waitForTransform("/world", robots[i].robot_name, ros::Time(0), ros::Duration(10.0) );
+	    listener.waitForTransform("/world", robots[i].robot_name, ros::Time(0), ros::Duration(1.0) );
 	    listener.lookupTransform("/world", robots[i].robot_name, ros::Time(0), transform);
 	    robots[i].curr_pose.x = transform.getOrigin().getX();
 	    robots[i].curr_pose.y = transform.getOrigin().getY();
@@ -246,7 +246,7 @@ void supervisor::run()
 		{
 		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		    double theta = robots[i].curr_pose.theta; //current orientation of i
-		    double alpha = M_PI/5; //half vision angle
+		    double alpha = M_PI/4; //half vision angle
 		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
 		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
@@ -265,11 +265,11 @@ void supervisor::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 4 && dist < 10)
+			    if(dist >= 5 && dist < 12)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
-			    if(dist < 4)
+			    if(dist < 5)
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
 				if(goaldist_i < goaldist_j) 

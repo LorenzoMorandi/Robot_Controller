@@ -12,7 +12,7 @@
     </initial_pose>
     <sonar>
 	<sonar_specifications>
-	    <cone_angle>1.256</cone_angle>
+	    <cone_angle>1.57</cone_angle>
 	    <max_range>10</max_range>
 	    <min_range>3</min_range>
 	    <frequency>10</frequency>
