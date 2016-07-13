@@ -13,6 +13,8 @@
 
 
 enum class state_machine_STATE {ROTATE_ONLY, MOVE_AND_ROTATE, MOVE_SLOW, STOP};
+enum state_transition {road_free, move_rot, near_car, stop_now, rot_only};
+
 
 struct Robot
 {
@@ -35,7 +37,6 @@ private:
     ros::NodeHandle nh;
     ros::NodeHandle pnh;
     
-//     std::vector<ros::Subscriber> goal_subs;
     std::vector<ros::Publisher> controller_pubs;
     std::vector<Robot> robots;
    
@@ -50,7 +51,6 @@ private:
     double LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
     double LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
     bool evolve_state_machines(int i);
-    
     
 public:
     supervisor();

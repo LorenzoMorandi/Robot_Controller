@@ -1,8 +1,6 @@
 #include "supervisor.h"
 
-
-
-void printRobot(Robot r)
+void printRobot(Robot r) //Print the robot state and transition
 {
     switch(r.state)
     {
@@ -15,15 +13,32 @@ void printRobot(Robot r)
     ROS_INFO_STREAM(r.transition);
 }
 
+state_transition getMax(std::vector<state_transition> v) //Assign value for every transition and take the max value
+{
+    int v_max = 0;
+    for(int i = 0; i < v.size(); i++) // Set a numeric value for every transition
+    {
+	int tmp_max;						//Low Priority
+	if(v.at(i) == state_transition::road_free) tmp_max = 0; //	|
+	if(v.at(i) == state_transition::move_rot) tmp_max = 1;	//	|
+	if(v.at(i) == state_transition::near_car) tmp_max = 2;  //	|
+	if(v.at(i) == state_transition::stop_now) tmp_max = 3;	//	|
+	if(v.at(i) == state_transition::rot_only) tmp_max = 4;	//	|
+	if(tmp_max > v_max) v_max = tmp_max;			//High priority
+    }
+    if(v_max == 0) return state_transition::road_free;
+    if(v_max == 1) return state_transition::move_rot;
+    if(v_max == 2) return state_transition::near_car;
+    if(v_max == 3) return state_transition::stop_now;
+    if(v_max == 4) return state_transition::rot_only;
+}
 
-
-
-supervisor::supervisor():pnh("~")
+supervisor::supervisor():pnh("~") //Constructor
 {
     n=0;
 }
 
-supervisor::~supervisor()
+supervisor::~supervisor() //Desctructor
 {
     for(int i=0; i<n; i++)
     {
@@ -31,15 +46,15 @@ supervisor::~supervisor()
 	robots[i].twist.angular.z = 0.0;
     }   
     
-    for(int i=0; i<n; i++)
+    for(int i = 0; i < n; i++)
 	controller_pubs[i].publish(robots[i].twist);
     
     ros::spin();
 }
 
-void supervisor::ReadPoses()
+void supervisor::ReadPoses() //Read from tf the robots position
 {
-    for(int i=0; i<n; i++)
+    for(int i = 0; i < n; i++)
     {
 	tf::StampedTransform transform;
 	try{
@@ -62,49 +77,72 @@ void supervisor::SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg)
 //TODO
 }
 
-void supervisor::AssignGoal()
+void supervisor::AssignGoal() //Manually assignement of goal
 {
-    
-    for(int i=0; i<n; i++)
+    for(int i = 0; i < n; i++)
     {
-	if(i==0 || i==1)
+	if(i == 0)
 	{
-	    robots[i].ref.x=37;
-	    robots[i].ref.y=17;
-	    robots[i].ref.theta=0;
+	    robots[i].ref.x = 37;
+	    robots[i].ref.y = 17;
+	    robots[i].ref.theta = 0;
 	}
-	if(i==2 || i==3)
+// 	if(i == 1)
+// 	{
+// 	    robots[i].ref.x = 37;
+// 	    robots[i].ref.y = 18;
+// 	    robots[i].ref.theta = 0;
+// 	}
+	if(i == 1)
 	{
-	    robots[i].ref.x=23;
-	    robots[i].ref.y=37;
-	    robots[i].ref.theta=0;
+	    robots[i].ref.x = 23;
+	    robots[i].ref.y = 37;
+	    robots[i].ref.theta = 0;
 	}
-	if(i==4 || i==5)
+// 	if(i == 3)
+// 	{
+// 	    robots[i].ref.x = 24;
+// 	    robots[i].ref.y = 37;
+// 	    robots[i].ref.theta = 0;
+// 	}
+	if(i == 2)
 	{
-	    robots[i].ref.x=3;
-	    robots[i].ref.y=23;
-	    robots[i].ref.theta=0;
+	    robots[i].ref.x = 3;
+	    robots[i].ref.y = 23;
+	    robots[i].ref.theta = 0;
 	}
-	if(i==6 || i==7)
+// 	if(i == 5)
+// 	{
+// 	    robots[i].ref.x = 3;
+// 	    robots[i].ref.y = 24;
+// 	    robots[i].ref.theta = 0;
+// 	}
+	if(i == 3)
 	{
-	    robots[i].ref.x=17;
-	    robots[i].ref.y=3;
-	    robots[i].ref.theta=0;
+	    robots[i].ref.x = 17;
+	    robots[i].ref.y = 3;
+	    robots[i].ref.theta = 0;
 	}
+// 	if(i == 7)
+// 	{
+// 	    robots[i].ref.x = 18;
+// 	    robots[i].ref.y = 3;
+// 	    robots[i].ref.theta = 0;
+// 	}
     }
 }
 
 double supervisor::LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
 {
-    return  reference.y-current.y;
+    return  reference.y - current.y;
 }
 
 double supervisor::LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
 {
-    return  reference.x-current.x;
+    return  reference.x - current.x;
 }
 
-bool supervisor::evolve_state_machines(int i)
+bool supervisor::evolve_state_machines(int i)	//State Machine evolution
 {
     if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
     {
@@ -151,29 +189,28 @@ bool supervisor::evolve_state_machines(int i)
 	robots[i].state = state_machine_STATE::ROTATE_ONLY;
 	return true;
     }
-
     return false;
 }
 
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 8);
+    pnh.param<int>("robot_number", n, 4);
     ROS_INFO_STREAM("Robot Number: " << n);
-    std::string name="robot";
+    std::string name = "robot";
     
-    for (int i=0; i<n; i++)
+    for (int i = 0; i < n; i++)
     {
 	Robot tmp;
-	tmp.robot_name=name+std::to_string(i);
-	tmp.err_ang=0.0;
-	tmp.err_lin=0.0;
-	tmp.state=state_machine_STATE::MOVE_AND_ROTATE;
-	tmp.transition="stop_now";
+	tmp.robot_name = name + std::to_string(i);
+	tmp.err_ang = 0.0;
+	tmp.err_lin = 0.0;
+	tmp.state = state_machine_STATE::MOVE_AND_ROTATE;
+	tmp.transition = "stop_now";
 	robots.push_back(tmp);
 	
 	ros::Publisher tmp_pub;
-	tmp_pub = nh.advertise<geometry_msgs::Twist>("/"+tmp.robot_name+"/cmd_vel", 1); 
+	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 1); 
 	controller_pubs.push_back(tmp_pub);
     }
     
@@ -183,57 +220,83 @@ void supervisor::init()
 
 void supervisor::run()
 {
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(30);
     ROS_INFO_STREAM("START SUPERVISOR");
 
     while (ros::ok())
     {
 	ReadPoses();
-
-	for(int i=0; i<n; i++)
+	
+	std::vector<state_transition> tmp(n, state_transition::road_free);
+	std::vector<std::vector<state_transition>> matrix(n, tmp);	//matrix nxn containing state transition info (i,j) e (j,i) 
+	
+	for(int i = 0; i < n; i++)
 	{
-	    double fx=LinearErrX(robots[i].curr_pose, robots[i].ref);
-	    double fy=LinearErrY(robots[i].curr_pose, robots[i].ref);
+	    double fx = LinearErrX(robots[i].curr_pose, robots[i].ref);
+	    double fy = LinearErrY(robots[i].curr_pose, robots[i].ref);
 	    
-	    robots[i].err_ang = atan2(fy,fx)-robots[i].curr_pose.theta;
-	    robots[i].err_lin = sqrt(pow(fx,2)+pow(fy,2));
+	    //Compute linear and angular error for robot i
+	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta + 0.01;
+	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
 	    	
-	    robots[i].transition="road_free";	
-	    for(int j=0; j<n; j++)
+	    //Robot i look at all the other robots j
+	    for(int j = 0; j < n; j++)
 	    {
-		if(i!=j)
+		if(i != j)
 		{
-		    double gamma=atan2(robots[j].curr_pose.y-robots[i].curr_pose.y,robots[j].curr_pose.x-robots[i].curr_pose.x);
-		    double theta=robots[i].curr_pose.theta;
-		    double alpha=M_PI/2;
-		    double dist=sqrt(pow(robots[i].curr_pose.x-robots[j].curr_pose.x,2)+pow(robots[i].curr_pose.y-robots[j].curr_pose.y,2));
-		    double angle=fabs(fmod(theta-gamma, 2*M_PI));
+		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
+		    double theta = robots[i].curr_pose.theta; //current orientation of i
+		    double alpha = M_PI/5; //half vision angle
+		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
-		    if(fabs(sin(robots[i].err_ang)) > 0.02)
-			robots[i].transition="rot_only";
-		    else if(robots[i].state==state_machine_STATE::ROTATE_ONLY)
-			robots[i].transition="move_rot";
-// 		    else if(dist<1.1)
-// 		    {
-// 			robots[i].transition="stop_now";
-// 			break;
-// 		    }
+		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
+		    double goaldist_i = sqrt(pow(robots[i].ref.x - robots[i].curr_pose.x,2) + pow(robots[i].ref.y - robots[i].curr_pose.y,2)); //distance between i and goal
+		    double goaldist_j = sqrt(pow(robots[j].ref.x - robots[j].curr_pose.x,2) + pow(robots[j].ref.y - robots[j].curr_pose.y,2)); //distance between j and goal
+
+		    if(fabs(sin(robots[i].err_ang)) > 0.1)
+		    {
+			matrix.at(i).at(j) = state_transition::rot_only;
+		    }
+		    else if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
+		    {
+			matrix.at(i).at(j) = state_transition::move_rot;
+		    }
 		    else
 		    {			
-			if(angle < alpha) 
+			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist>=3 && dist<10)
-				robots[i].transition="near_car";
-			    if(dist<3)
-				robots[i].transition="stop_now";		    
+			    if(dist >= 3.5 && dist < 10)
+			    {
+				matrix.at(i).at(j) = state_transition::near_car;
+			    }
+			    if(dist < 3.5) /* && goaldist_i >= goaldist_j)*/
+			    {
+				matrix.at(i).at(j) = state_transition::stop_now;
+			    }
+// 			    if(dist < 4 && goaldist_i < goaldist_j)
+// 			    {
+// 				matrix.at(i).at(j) = state_transition::move_rot;
+// 			    }
 			}		    		    
 		    }
 		}
 	    }
 	}
 	
+	for(int i = 0; i < n; i++)
+	{
+	    switch(getMax(matrix.at(i)))
+	    {
+		case state_transition::road_free: robots[i].transition = "road_free"; break;
+		case state_transition::rot_only: robots[i].transition = "rot_only";  break;
+		case state_transition::near_car: robots[i].transition = "near_car"; break;
+		case state_transition::stop_now: robots[i].transition = "stop_now"; break;
+		case state_transition::move_rot: robots[i].transition = "move_rot"; break;
+		default: abort();
+	    }
+	}
 	
-	for(int i=0; i<n; i++)	
+	for(int i = 0; i < n; i++)	
 	{
 	    if(evolve_state_machines(i))
 	    {
@@ -249,17 +312,17 @@ void supervisor::run()
 	        
 	    if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
 	    {
-		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
 		robots[i].twist.linear.x = 0.0;	
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
 	    {
-		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
 		robots[i].twist.linear.x = 0.1*robots[i].err_lin;	
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
-		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
 		robots[i].twist.linear.x = 0.05*robots[i].err_lin;
 	    }
 	    if(robots[i].state == state_machine_STATE::STOP)

@@ -2,7 +2,7 @@
   <robot_specifications>
     <footprint>
       <footprint_specifications>
-        <radius>0.5</radius>
+        <radius>0.8</radius>
       </footprint_specifications>
     </footprint>
     <initial_pose>
@@ -12,9 +12,9 @@
     </initial_pose>
     <sonar>
 	<sonar_specifications>
-	    <cone_angle>3.14</cone_angle>
+	    <cone_angle>1.256</cone_angle>
 	    <max_range>10</max_range>
-	    <min_range>4</min_range>
+	    <min_range>3</min_range>
 	    <frequency>10</frequency>
 	    <pose>
 	    <x>0.1</x>
