@@ -18,7 +18,7 @@
 	stdr_msgs::RobotMsg msg;
 	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/simple_robot.xml";
 
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < 2; i++)
 	{
 	    try 
 	    {
@@ -30,7 +30,7 @@
 		return -1;
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
-	    msg.initialPose.x = 3;
+	    msg.initialPose.x = 3+6*i;
 	    msg.initialPose.y = 17;
 	    msg.initialPose.theta = 0 + random_variable;
 	
@@ -49,7 +49,7 @@
 	    usleep(100*1000);
 	}
 	
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < 2; i++)
 	{
 	    try 
 	    {
@@ -62,7 +62,7 @@
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
 	    msg.initialPose.x = 23;
-	    msg.initialPose.y = 3;
+	    msg.initialPose.y = 3+6*i;
 	    msg.initialPose.theta = 0 + random_variable;
 	
 	
@@ -80,7 +80,7 @@
 	    usleep(100*1000);
 	}
 	
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < 2; i++)
 	{
 	    try 
 	    {
@@ -92,7 +92,7 @@
 		return -1;
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
-	    msg.initialPose.x = 37;
+	    msg.initialPose.x = 37-6*i;
 	    msg.initialPose.y = 23;;
 	    msg.initialPose.theta = M_PI + random_variable;
 	
@@ -112,7 +112,7 @@
 	}
 
 	    
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < 2; i++)
 	{
 	    try 
 	    {
@@ -125,7 +125,7 @@
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
 	    msg.initialPose.x = 17;
-	    msg.initialPose.y = 37;
+	    msg.initialPose.y = 37-6*i;
 	    msg.initialPose.theta = M_PI + random_variable;
 	
 	

@@ -87,48 +87,48 @@ void supervisor::AssignGoal() //Manually assignement of goal
 	    robots[i].ref.y = 17;
 	    robots[i].ref.theta = 0;
 	}
-// 	if(i == 1)
-// 	{
-// 	    robots[i].ref.x = 37;
-// 	    robots[i].ref.y = 18;
-// 	    robots[i].ref.theta = 0;
-// 	}
 	if(i == 1)
+	{
+	    robots[i].ref.x = 37;
+	    robots[i].ref.y = 17;
+	    robots[i].ref.theta = 0;
+	}
+	if(i == 2)
 	{
 	    robots[i].ref.x = 23;
 	    robots[i].ref.y = 37;
 	    robots[i].ref.theta = 0;
 	}
-// 	if(i == 3)
-// 	{
-// 	    robots[i].ref.x = 24;
-// 	    robots[i].ref.y = 37;
-// 	    robots[i].ref.theta = 0;
-// 	}
-	if(i == 2)
+	if(i == 3)
+	{
+	    robots[i].ref.x = 23;
+	    robots[i].ref.y = 37;
+	    robots[i].ref.theta = 0;
+	}
+	if(i == 4)
 	{
 	    robots[i].ref.x = 3;
 	    robots[i].ref.y = 23;
 	    robots[i].ref.theta = 0;
 	}
-// 	if(i == 5)
-// 	{
-// 	    robots[i].ref.x = 3;
-// 	    robots[i].ref.y = 24;
-// 	    robots[i].ref.theta = 0;
-// 	}
-	if(i == 3)
+	if(i == 5)
+	{
+	    robots[i].ref.x = 3;
+	    robots[i].ref.y = 23;
+	    robots[i].ref.theta = 0;
+	}
+	if(i == 6)
 	{
 	    robots[i].ref.x = 17;
 	    robots[i].ref.y = 3;
 	    robots[i].ref.theta = 0;
 	}
-// 	if(i == 7)
-// 	{
-// 	    robots[i].ref.x = 18;
-// 	    robots[i].ref.y = 3;
-// 	    robots[i].ref.theta = 0;
-// 	}
+	if(i == 7)
+	{
+	    robots[i].ref.x = 17;
+	    robots[i].ref.y = 3;
+	    robots[i].ref.theta = 0;
+	}
     }
 }
 
@@ -195,7 +195,7 @@ bool supervisor::evolve_state_machines(int i)	//State Machine evolution
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 4);
+    pnh.param<int>("robot_number", n, 8);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name = "robot";
     
@@ -265,18 +265,16 @@ void supervisor::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 3.5 && dist < 10)
+			    if(dist >= 4 && dist < 10)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
-			    if(dist < 3.5) /* && goaldist_i >= goaldist_j)*/
+			    if(dist < 4)
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
+				if(goaldist_i < goaldist_j) 
+				    matrix.at(i).at(j) = state_transition::road_free;
 			    }
-// 			    if(dist < 4 && goaldist_i < goaldist_j)
-// 			    {
-// 				matrix.at(i).at(j) = state_transition::move_rot;
-// 			    }
 			}		    		    
 		    }
 		}
@@ -318,7 +316,7 @@ void supervisor::run()
 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
 	    {
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.1*robots[i].err_lin;	
+		robots[i].twist.linear.x = 0.08*robots[i].err_lin;	
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
