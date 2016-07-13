@@ -210,7 +210,7 @@ void supervisor::init()
 	robots.push_back(tmp);
 	
 	ros::Publisher tmp_pub;
-	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 1); 
+	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
 	controller_pubs.push_back(tmp_pub);
     }
     
@@ -246,7 +246,7 @@ void supervisor::run()
 		{
 		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		    double theta = robots[i].curr_pose.theta; //current orientation of i
-		    double alpha = M_PI/4; //half vision angle
+		    double alpha = M_PI/5; //half vision angle
 		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
 		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
@@ -265,14 +265,15 @@ void supervisor::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 5 && dist < 12)
+			    if(dist >= 4 && dist < 12)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
-			    if(dist < 5)
+			    if(dist < 4)
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
-				if(goaldist_i < goaldist_j) 
+				
+				if(i > j) 
 				    matrix.at(i).at(j) = state_transition::road_free;
 			    }
 			}		    		    
@@ -316,12 +317,12 @@ void supervisor::run()
 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
 	    {
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.08*robots[i].err_lin;	
+		robots[i].twist.linear.x = 0.05*robots[i].err_lin;	
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.05*robots[i].err_lin;
+		robots[i].twist.linear.x = 0.02*robots[i].err_lin;
 	    }
 	    if(robots[i].state == state_machine_STATE::STOP)
 	    {

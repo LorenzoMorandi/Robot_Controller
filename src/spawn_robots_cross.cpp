@@ -32,7 +32,7 @@
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
 	    msg.initialPose.x = 3+10*i;
 	    msg.initialPose.y = 17;
-	    msg.initialPose.theta = 0 + random_variable;
+	    msg.initialPose.theta = 0 + 0.3; // random_variable;
 	
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
@@ -63,7 +63,7 @@
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
 	    msg.initialPose.x = 23;
 	    msg.initialPose.y = 3+10*i;
-	    msg.initialPose.theta = 0 + random_variable;
+	    msg.initialPose.theta = 0 + 0.3; // random_variable;
 	
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
@@ -94,7 +94,7 @@
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
 	    msg.initialPose.x = 37-10*i;
 	    msg.initialPose.y = 23;;
-	    msg.initialPose.theta = M_PI + random_variable;
+	    msg.initialPose.theta = M_PI + 0.3; // random_variable;
 	
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
@@ -126,7 +126,7 @@
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
 	    msg.initialPose.x = 17;
 	    msg.initialPose.y = 37-10*i;
-	    msg.initialPose.theta = M_PI + random_variable;
+	    msg.initialPose.theta = M_PI + 0.3; // random_variable;
 	
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
