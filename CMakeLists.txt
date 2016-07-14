@@ -148,6 +148,8 @@ add_executable(robot_controller_node src/controller_main.cpp src/controller.cpp)
 add_executable(supervisor src/supervisor_main.cpp src/supervisor.cpp)
 add_executable(spawn_robots_road src/spawn_robots_road.cpp)
 add_executable(spawn_robots_cross src/spawn_robots_cross.cpp)
+add_executable(spawn_robots_multi_cross src/spawn_robots_multi_cross.cpp)
+
 
 
 ## Add cmake target dependencies of the executable
@@ -159,6 +161,8 @@ target_link_libraries(robot_controller_node ${catkin_LIBRARIES})
 target_link_libraries(supervisor ${catkin_LIBRARIES})
 target_link_libraries(spawn_robots_road ${catkin_LIBRARIES} stdr_handle_robot)
 target_link_libraries(spawn_robots_cross ${catkin_LIBRARIES} stdr_handle_robot)
+target_link_libraries(spawn_robots_multi_cross ${catkin_LIBRARIES} stdr_handle_robot)
+
 
 
 #############

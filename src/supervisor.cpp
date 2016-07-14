@@ -40,16 +40,7 @@ supervisor::supervisor():pnh("~") //Constructor
 
 supervisor::~supervisor() //Desctructor
 {
-    for(int i=0; i<n; i++)
-    {
-	robots[i].twist.linear.x = 0.0;
-	robots[i].twist.angular.z = 0.0;
-    }   
     
-    for(int i = 0; i < n; i++)
-	controller_pubs[i].publish(robots[i].twist);
-    
-    ros::spin();
 }
 
 void supervisor::ReadPoses() //Read from tf the robots position
@@ -79,57 +70,93 @@ void supervisor::SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg)
 
 void supervisor::AssignGoal() //Manually assignement of goal
 {
+    //GOAL FOR MULTI CROSS SCENARIO
+    
     for(int i = 0; i < n; i++)
     {
-	if(i == 0)
+	if(i>=0 && i<=8)
 	{
-	    robots[i].ref.x = 37;
-	    robots[i].ref.y = 17;
+	    robots[i].ref.x = 118;
+	    robots[i].ref.y = robots[i].curr_pose.y;
 	    robots[i].ref.theta = 0;
 	}
-	if(i == 1)
+	
+	if(i>=9 && i<=17)
 	{
-	    robots[i].ref.x = 37;
-	    robots[i].ref.y = 17;
+	    robots[i].ref.x = robots[i].curr_pose.x;
+	    robots[i].ref.y = 118;
 	    robots[i].ref.theta = 0;
 	}
-	if(i == 2)
+	
+	if(i>=18 && i<=26)
 	{
-	    robots[i].ref.x = 23;
-	    robots[i].ref.y = 37;
+	    robots[i].ref.x = 2;
+	    robots[i].ref.y = robots[i].curr_pose.y;
 	    robots[i].ref.theta = 0;
 	}
-	if(i == 3)
+	
+	if(i>=27 && i<=36)
 	{
-	    robots[i].ref.x = 23;
-	    robots[i].ref.y = 37;
+	    robots[i].ref.x = robots[i].curr_pose.x;
+	    robots[i].ref.y = 2;
 	    robots[i].ref.theta = 0;
 	}
-	if(i == 4)
-	{
-	    robots[i].ref.x = 3;
-	    robots[i].ref.y = 23;
-	    robots[i].ref.theta = 0;
-	}
-	if(i == 5)
-	{
-	    robots[i].ref.x = 3;
-	    robots[i].ref.y = 23;
-	    robots[i].ref.theta = 0;
-	}
-	if(i == 6)
-	{
-	    robots[i].ref.x = 17;
-	    robots[i].ref.y = 3;
-	    robots[i].ref.theta = 0;
-	}
-	if(i == 7)
-	{
-	    robots[i].ref.x = 17;
-	    robots[i].ref.y = 3;
-	    robots[i].ref.theta = 0;
-	}
+	
     }
+    
+    //GOAL FOR SINGLE CROSS SCENARIO
+    
+//     for(int i = 0; i < n; i++)
+//     {
+// 	if(i == 0)
+// 	{
+// 	    robots[i].ref.x = 37;
+// 	    robots[i].ref.y = 17;
+// 	    robots[i].ref.theta = 0;
+// 	}
+// 	if(i == 1)
+// 	{
+// 	    robots[i].ref.x = 37;
+// 	    robots[i].ref.y = 17;
+// 	    robots[i].ref.theta = 0;
+// 	}
+// 	if(i == 2)
+// 	{
+// 	    robots[i].ref.x = 23;
+// 	    robots[i].ref.y = 37;
+// 	    robots[i].ref.theta = 0;
+// 	}
+// 	if(i == 3)
+// 	{
+// 	    robots[i].ref.x = 23;
+// 	    robots[i].ref.y = 37;
+// 	    robots[i].ref.theta = 0;
+// 	}
+// 	if(i == 4)
+// 	{
+// 	    robots[i].ref.x = 3;
+// 	    robots[i].ref.y = 23;
+// 	    robots[i].ref.theta = 0;
+// 	}
+// 	if(i == 5)
+// 	{
+// 	    robots[i].ref.x = 3;
+// 	    robots[i].ref.y = 23;
+// 	    robots[i].ref.theta = 0;
+// 	}
+// 	if(i == 6)
+// 	{
+// 	    robots[i].ref.x = 17;
+// 	    robots[i].ref.y = 3;
+// 	    robots[i].ref.theta = 0;
+// 	}
+// 	if(i == 7)
+// 	{
+// 	    robots[i].ref.x = 17;
+// 	    robots[i].ref.y = 3;
+// 	    robots[i].ref.theta = 0;
+// 	}
+//     }
 }
 
 double supervisor::LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
@@ -195,7 +222,7 @@ bool supervisor::evolve_state_machines(int i)	//State Machine evolution
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 8);
+    pnh.param<int>("robot_number", n, 36);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name = "robot";
     
@@ -246,14 +273,17 @@ void supervisor::run()
 		{
 		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		    double theta = robots[i].curr_pose.theta; //current orientation of i
-		    double alpha = M_PI/5; //half vision angle
+		    double alpha= M_PI/5; //half vision angle    
 		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
 		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
 		    double goaldist_i = sqrt(pow(robots[i].ref.x - robots[i].curr_pose.x,2) + pow(robots[i].ref.y - robots[i].curr_pose.y,2)); //distance between i and goal
 		    double goaldist_j = sqrt(pow(robots[j].ref.x - robots[j].curr_pose.x,2) + pow(robots[j].ref.y - robots[j].curr_pose.y,2)); //distance between j and goal
 
-		    if(fabs(sin(robots[i].err_ang)) > 0.1)
+		    if (i < j)
+			double alpha = M_PI; //half vision angle
+		    
+		    if(fabs(sin(robots[i].err_ang)) > 0.05)
 		    {
 			matrix.at(i).at(j) = state_transition::rot_only;
 		    }
@@ -265,11 +295,11 @@ void supervisor::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 4 && dist < 12)
+			    if(dist >= 6 && dist < 12)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
-			    if(dist < 4)
+			    if(dist < 6)
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
 				
@@ -317,12 +347,12 @@ void supervisor::run()
 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
 	    {
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.05*robots[i].err_lin;	
+		robots[i].twist.linear.x = 0.08*robots[i].err_lin;	
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.02*robots[i].err_lin;
+		robots[i].twist.linear.x = 0.05*robots[i].err_lin;
 	    }
 	    if(robots[i].state == state_machine_STATE::STOP)
 	    {
