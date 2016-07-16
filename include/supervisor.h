@@ -21,7 +21,7 @@ struct Robot
     std::string robot_name;
     geometry_msgs::Twist twist;
     geometry_msgs::Pose2D curr_pose;
-    geometry_msgs::Pose2D ref;
+    std::vector<geometry_msgs::Pose2D> ref;
     double err_ang;
     double err_lin;
     std::string transition;
@@ -45,11 +45,11 @@ private:
     int n;
 
 private:
-    void SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg);
     void ReadPoses();
     void AssignGoal();
-    double LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
-    double LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference);
+    void switchGoal (int i);
+    double LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference);
+    double LinearErrY(geometry_msgs::Pose2D current,  std::vector<geometry_msgs::Pose2D> reference);
     bool evolve_state_machines(int i);
     
 public:

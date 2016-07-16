@@ -33,6 +33,11 @@ state_transition getMax(std::vector<state_transition> v) //Assign value for ever
     if(v_max == 4) return state_transition::rot_only;
 }
 
+void supervisor::switchGoal(int i)
+{
+   robots[i].ref.erase(robots[i].ref.begin()+0);
+}
+
 supervisor::supervisor():pnh("~") //Constructor
 {
     n=0;
@@ -60,12 +65,6 @@ void supervisor::ReadPoses() //Read from tf the robots position
 	    ros::Duration(1.0).sleep();
 	}
     }
-}
-
-
-void supervisor::SetGoals(const geometry_msgs::Pose2D::ConstPtr& msg)
-{
-//TODO
 }
 
 void supervisor::AssignGoal() //Manually assignement of goal
@@ -101,50 +100,86 @@ void supervisor::AssignGoal() //Manually assignement of goal
 // 	    robots[i].ref.y = 2;
 // 	    robots[i].ref.theta = 0;
 // 	}
-//     }
-    
+
     //GOAL FOR SINGLE CROSS SCENARIO
     
-    for(int i = 0; i < n; i++)
-    {
-	if(i>=0 && i<=1)
-	{
-	    robots[i].ref.x = 37;
-	    robots[i].ref.y = robots[i].curr_pose.y;
-	    robots[i].ref.theta = 0;
-	}
-	
-	if(i>=2 && i<=3)
-	{
-	    robots[i].ref.x = robots[i].curr_pose.x;
-	    robots[i].ref.y = 37;
-	    robots[i].ref.theta = 0;
-	}
-	
-	if(i>=4 && i<=5)
-	{
-	    robots[i].ref.x = 3;
-	    robots[i].ref.y = robots[i].curr_pose.y;
-	    robots[i].ref.theta = 0;
-	}
-	
-	if(i>=6 && i<=7)
-	{
-	    robots[i].ref.x = robots[i].curr_pose.x;
-	    robots[i].ref.y = 3;
-	    robots[i].ref.theta = 0;
-	}
-    }
+    geometry_msgs::Pose2D tmp;
+    
+    //robot 0 goal sequences
+    tmp.y = robots[0].curr_pose.y;
+    tmp.x = 10;	    
+    robots[0].ref.push_back(tmp);
+    tmp.x = 20;	    
+    robots[0].ref.push_back(tmp);
+    tmp.x = 40;	    
+    robots[0].ref.push_back(tmp);
+    
+    //robot 1 goal sequences
+    tmp.y = robots[1].curr_pose.y;
+    tmp.x = 20;	    
+    robots[1].ref.push_back(tmp);
+    tmp.x = 40;	    
+    robots[1].ref.push_back(tmp);
+    
+    //robot 2 goal sequences
+    tmp.x = robots[2].curr_pose.x;
+    tmp.y = 10;	    
+    robots[2].ref.push_back(tmp);
+    tmp.y = 20;	    
+    robots[2].ref.push_back(tmp);
+    tmp.y = 40;	    
+    robots[2].ref.push_back(tmp);
+    
+    //robot 3 goal sequences
+    tmp.x = robots[3].curr_pose.x;
+    tmp.y = 20;	    
+    robots[3].ref.push_back(tmp);
+    tmp.y = 40;	    
+    robots[3].ref.push_back(tmp);
+    
+    //robot 4 goal sequences
+    tmp.y = robots[4].curr_pose.y;
+    tmp.x = 30;	    
+    robots[4].ref.push_back(tmp);
+    tmp.x = 20;	    
+    robots[4].ref.push_back(tmp);
+    tmp.x = 1;	    
+    robots[4].ref.push_back(tmp);
+    
+    //robot 5 goal sequences
+    tmp.y = robots[5].curr_pose.y;
+    tmp.x = 20;	    
+    robots[5].ref.push_back(tmp);
+    tmp.x = 1;	    
+    robots[5].ref.push_back(tmp);
+    
+    //robot 6 goal sequences
+    tmp.x = robots[6].curr_pose.x;
+    tmp.y = 30;	    
+    robots[6].ref.push_back(tmp);
+    tmp.y = 20;	    
+    robots[6].ref.push_back(tmp);
+    tmp.y = 1;	    
+    robots[6].ref.push_back(tmp);
+    
+    //robot 7 goal sequences
+    tmp.x = robots[7].curr_pose.x;
+    tmp.y = 20;	    
+    robots[7].ref.push_back(tmp);
+    tmp.y = 1;	    
+    robots[7].ref.push_back(tmp);
 }
 
-double supervisor::LinearErrY(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
+double supervisor::LinearErrY(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
 {
-    return  reference.y - current.y;
+    geometry_msgs::Pose2D reff = reference[0];
+    return  reff.y - current.y;
 }
 
-double supervisor::LinearErrX(geometry_msgs::Pose2D current, geometry_msgs::Pose2D reference)
+double supervisor::LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
 {
-    return  reference.x - current.x;
+    geometry_msgs::Pose2D reff = reference[0];
+    return  reff.x - current.x;
 }
 
 bool supervisor::evolve_state_machines(int i)	//State Machine evolution
@@ -228,6 +263,7 @@ void supervisor::run()
     ros::Rate loop_rate(30);
     ROS_INFO_STREAM("START SUPERVISOR");
 
+    
     while (ros::ok())
     {
 	ReadPoses();
@@ -243,7 +279,12 @@ void supervisor::run()
 	    //Compute linear and angular error for robot i
 	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta + 0.01;
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
-	    	
+	    
+	    if(robots[i].err_lin < 0.5 && robots[i].ref.size()>1)
+	    {
+		switchGoal(i);
+	    }
+	    
 	    //Robot i look at all the other robots j
 	    for(int j = 0; j < n; j++)
 	    {
@@ -255,8 +296,6 @@ void supervisor::run()
 		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
 		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
-		    double goaldist_i = sqrt(pow(robots[i].ref.x - robots[i].curr_pose.x,2) + pow(robots[i].ref.y - robots[i].curr_pose.y,2)); //distance between i and goal
-		    double goaldist_j = sqrt(pow(robots[j].ref.x - robots[j].curr_pose.x,2) + pow(robots[j].ref.y - robots[j].curr_pose.y,2)); //distance between j and goal
 
 // 		    if (i < j)
 // 			double alpha = M_PI; //half vision angle
@@ -325,12 +364,12 @@ void supervisor::run()
 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
 	    {
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.08*robots[i].err_lin;	
+		robots[i].twist.linear.x = 0.5*robots[i].err_lin;	
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.05*robots[i].err_lin;
+		robots[i].twist.linear.x = 0.2*robots[i].err_lin;
 	    }
 	    if(robots[i].state == state_machine_STATE::STOP)
 	    {
