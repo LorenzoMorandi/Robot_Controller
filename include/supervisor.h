@@ -8,6 +8,8 @@
 #include <geometry_msgs/Pose2D.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
+#include <stdr_robot/handle_robot.h>
+#include <stdr_parser/stdr_parser.h>
 #include "math.h"
 #include <sstream>
 
@@ -25,6 +27,7 @@ struct Robot
     double err_lin;
     std::string transition;
     state_machine_STATE state;
+    int id;
 };
 
 class supervisor

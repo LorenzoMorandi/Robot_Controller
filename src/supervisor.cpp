@@ -64,61 +64,60 @@ void supervisor::ReadPoses() //Read from tf the robots position
 
 void supervisor::AssignGoal() //Manually assignement of goal
 {
+    geometry_msgs::Pose2D tmp;
+    
     //GOAL FOR MULTI CROSS SCENARIO
     
 //     for(int i = 0; i < n; i++)
 //     {
 // 	if(i>=0 && i<=8)
 // 	{
-// 	    robots[i].ref.x = 118;
-// 	    robots[i].ref.y = robots[i].curr_pose.y;
-// 	    robots[i].ref.theta = 0;
+// 	    tmp.y = robots[i].curr_pose.y;
+// 	    tmp.x = 118;	    
+// 	    robots[i].ref.push_back(tmp);
 // 	}
 // 	
 // 	if(i>=9 && i<=17)
 // 	{
-// 	    robots[i].ref.x = robots[i].curr_pose.x;
-// 	    robots[i].ref.y = 118;
-// 	    robots[i].ref.theta = 0;
+// 	    tmp.y = 118;
+// 	    tmp.x = robots[i].curr_pose.x;	    
+// 	    robots[i].ref.push_back(tmp);
 // 	}
 // 	
 // 	if(i>=18 && i<=26)
 // 	{
-// 	    robots[i].ref.x = 2;
-// 	    robots[i].ref.y = robots[i].curr_pose.y;
-// 	    robots[i].ref.theta = 0;
+// 	    tmp.y = robots[i].curr_pose.y;
+// 	    tmp.x = 2;	    
+// 	    robots[i].ref.push_back(tmp);
 // 	}
 // 	
 // 	if(i>=27 && i<=36)
 // 	{
-// 	    robots[i].ref.x = robots[i].curr_pose.x;
-// 	    robots[i].ref.y = 2;
-// 	    robots[i].ref.theta = 0;
+// 	    tmp.y = 2;
+// 	    tmp.x = robots[i].curr_pose.x;	    
+// 	    robots[i].ref.push_back(tmp);
 // 	}
+//     }
 
     //GOAL FOR SINGLE CROSS SCENARIO
-    
-    geometry_msgs::Pose2D tmp;
     
     //robot 0 goal sequences
     tmp.y = robots[0].curr_pose.y;
     tmp.x = 14;	    
     robots[0].ref.push_back(tmp);
-//     tmp.x = 20;
-//     tmp.y = 20;
-//     robots[0].ref.push_back(tmp);
-    tmp.x = 24;	 
+    tmp.x = 23;	 
     tmp.y = 25;
     robots[0].ref.push_back(tmp);
-    tmp.x = 24;	 
+    tmp.x = 23;	 
     tmp.y = 35;
     robots[0].ref.push_back(tmp);
     
     //robot 1 goal sequences
-    tmp.y = robots[1].curr_pose.y;
-    tmp.x = 20;	    
+    tmp.x = 17;	 
+    tmp.y = 15; 
     robots[1].ref.push_back(tmp);
-    tmp.x = 38;	    
+    tmp.x = 17;	 
+    tmp.y = 5; 
     robots[1].ref.push_back(tmp);
     
     //robot 2 goal sequences
@@ -247,6 +246,7 @@ void supervisor::init()
 	tmp.err_lin = 0.0;
 	tmp.state = state_machine_STATE::MOVE_AND_ROTATE;
 	tmp.transition = "stop_now";
+	tmp.id = i;
 	robots.push_back(tmp);
 	
 	ros::Publisher tmp_pub;
@@ -279,7 +279,7 @@ void supervisor::run()
 	    //Compute linear and angular error for robot i
 	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta + 0.01;
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
-	    
+	    	    	    
 	    if(robots[i].err_lin < 1 && robots[i].ref.size()>1)
 		robots[i].ref.erase(robots[i].ref.begin()+0); //SWITCH GOAL
 	    
@@ -311,7 +311,7 @@ void supervisor::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 5 && dist < 12)
+			    if(dist >= 5 && dist < 8)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
@@ -320,8 +320,10 @@ void supervisor::run()
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
 				
-				if(i > j) 
+				if(robots[i].id > robots[j].id && dist > 3) 
 				    matrix.at(i).at(j) = state_transition::road_free;
+				if(robots[i].id > robots[j].id && dist < 3)
+				    matrix.at(i).at(j) = state_transition::stop_now;
 			    }
 
 			}
@@ -342,8 +344,31 @@ void supervisor::run()
 		    }
 		}
 	    }
+	    
+	    if(robots[i].err_lin < 0.5) //DELETE ROBOT
+	    {
+		stdr_robot::HandleRobot handler;
+		std::string name("robot" + std::to_string(robots[i].id));
+		try
+		{    
+		    if (handler.deleteRobot(name))
+		    {
+			ROS_INFO("Robot %s deleted successfully", name.c_str());
+		    }
+		    else 
+		    {
+			ROS_ERROR("Could not delete robot %s", name.c_str());
+		    }
+		}
+		catch (stdr_robot::ConnectionException& ex) 
+		{
+		    ROS_ERROR("%s", ex.what());
+		}
+		robots.erase(robots.begin() + i);
+		n--;
+	    }
 	}
-	
+		
 	for(int i = 0; i < n; i++)
 	{
 	    switch(getMax(matrix.at(i)))
