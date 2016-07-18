@@ -15,7 +15,6 @@
 enum class state_machine_STATE {ROTATE_ONLY, MOVE_AND_ROTATE, MOVE_SLOW, STOP};
 enum state_transition {road_free, move_rot, near_car, stop_now, rot_only};
 
-
 struct Robot
 {
     std::string robot_name;
@@ -27,9 +26,6 @@ struct Robot
     std::string transition;
     state_machine_STATE state;
 };
-
-
-
 
 class supervisor
 {
@@ -47,7 +43,6 @@ private:
 private:
     void ReadPoses();
     void AssignGoal();
-    void switchGoal (int i);
     double LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference);
     double LinearErrY(geometry_msgs::Pose2D current,  std::vector<geometry_msgs::Pose2D> reference);
     bool evolve_state_machines(int i);

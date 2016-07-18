@@ -33,11 +33,6 @@ state_transition getMax(std::vector<state_transition> v) //Assign value for ever
     if(v_max == 4) return state_transition::rot_only;
 }
 
-void supervisor::switchGoal(int i)
-{
-   robots[i].ref.erase(robots[i].ref.begin()+0);
-}
-
 supervisor::supervisor():pnh("~") //Constructor
 {
     n=0;
@@ -107,18 +102,23 @@ void supervisor::AssignGoal() //Manually assignement of goal
     
     //robot 0 goal sequences
     tmp.y = robots[0].curr_pose.y;
-    tmp.x = 10;	    
+    tmp.x = 14;	    
     robots[0].ref.push_back(tmp);
-    tmp.x = 20;	    
+//     tmp.x = 20;
+//     tmp.y = 20;
+//     robots[0].ref.push_back(tmp);
+    tmp.x = 24;	 
+    tmp.y = 25;
     robots[0].ref.push_back(tmp);
-    tmp.x = 40;	    
+    tmp.x = 24;	 
+    tmp.y = 35;
     robots[0].ref.push_back(tmp);
     
     //robot 1 goal sequences
     tmp.y = robots[1].curr_pose.y;
     tmp.x = 20;	    
     robots[1].ref.push_back(tmp);
-    tmp.x = 40;	    
+    tmp.x = 38;	    
     robots[1].ref.push_back(tmp);
     
     //robot 2 goal sequences
@@ -127,14 +127,14 @@ void supervisor::AssignGoal() //Manually assignement of goal
     robots[2].ref.push_back(tmp);
     tmp.y = 20;	    
     robots[2].ref.push_back(tmp);
-    tmp.y = 40;	    
+    tmp.y = 38;	    
     robots[2].ref.push_back(tmp);
     
     //robot 3 goal sequences
     tmp.x = robots[3].curr_pose.x;
     tmp.y = 20;	    
     robots[3].ref.push_back(tmp);
-    tmp.y = 40;	    
+    tmp.y = 38;	    
     robots[3].ref.push_back(tmp);
     
     //robot 4 goal sequences
@@ -143,14 +143,14 @@ void supervisor::AssignGoal() //Manually assignement of goal
     robots[4].ref.push_back(tmp);
     tmp.x = 20;	    
     robots[4].ref.push_back(tmp);
-    tmp.x = 1;	    
+    tmp.x = 5;	    
     robots[4].ref.push_back(tmp);
     
     //robot 5 goal sequences
     tmp.y = robots[5].curr_pose.y;
     tmp.x = 20;	    
     robots[5].ref.push_back(tmp);
-    tmp.x = 1;	    
+    tmp.x = 5;	    
     robots[5].ref.push_back(tmp);
     
     //robot 6 goal sequences
@@ -159,14 +159,14 @@ void supervisor::AssignGoal() //Manually assignement of goal
     robots[6].ref.push_back(tmp);
     tmp.y = 20;	    
     robots[6].ref.push_back(tmp);
-    tmp.y = 1;	    
+    tmp.y = 5;	    
     robots[6].ref.push_back(tmp);
     
     //robot 7 goal sequences
     tmp.x = robots[7].curr_pose.x;
     tmp.y = 20;	    
     robots[7].ref.push_back(tmp);
-    tmp.y = 1;	    
+    tmp.y = 5;	    
     robots[7].ref.push_back(tmp);
 }
 
@@ -280,10 +280,9 @@ void supervisor::run()
 	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta + 0.01;
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
 	    
-	    if(robots[i].err_lin < 0.5 && robots[i].ref.size()>1)
-	    {
-		switchGoal(i);
-	    }
+	    if(robots[i].err_lin < 1 && robots[i].ref.size()>1)
+		robots[i].ref.erase(robots[i].ref.begin()+0); //SWITCH GOAL
+	    
 	    
 	    //Robot i look at all the other robots j
 	    for(int j = 0; j < n; j++)
@@ -312,18 +311,34 @@ void supervisor::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 4 && dist < 12)
+			    if(dist >= 5 && dist < 12)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
-			    if(dist < 4)
+			    
+			    if(dist < 5)
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
 				
-// 				if(i > j) 
-// 				    matrix.at(i).at(j) = state_transition::road_free;
+				if(i > j) 
+				    matrix.at(i).at(j) = state_transition::road_free;
 			    }
-			}		    		    
+
+			}
+			
+			/*if(robots[i].curr_pose.x <= 14.5 && robots[i].curr_pose.x >= 13.5 &&  robots[i].curr_pose.y <= 17.5 && robots[i].curr_pose.y >= 16.5 || 
+			    robots[i].curr_pose.x <= 23.5 && robots[i].curr_pose.x >= 22.5 && robots[i].curr_pose.y <= 14.5 && robots[i].curr_pose.y >= 13.5||
+			    robots[i].curr_pose.x <= 26.5 && robots[i].curr_pose.x >= 25.5 && robots[i].curr_pose.y <= 23.5 && robots[i].curr_pose.y >= 22.5 ||
+			    robots[i].curr_pose.x <= 17.5 && robots[i].curr_pose.x >= 16.5 && robots[i].curr_pose.y <= 26.5 && robots[i].curr_pose.y >= 25.5 )
+			{  
+			    alpha*=2; //half vision angle    
+			    
+			    if(angle < alpha && dist < 13)
+				if(i > j)
+				    matrix.at(i).at(j) = state_transition::road_free;
+				else
+				    matrix.at(i).at(j) = state_transition::stop_now;
+			}	*/	    		    
 		    }
 		}
 	    }
