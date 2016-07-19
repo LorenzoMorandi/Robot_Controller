@@ -73,13 +73,13 @@ void supervisor::AssignGoal() //Manually assignement of goal
 // 	if(i>=0 && i<=8)
 // 	{
 // 	    tmp.y = robots[i].curr_pose.y;
-// 	    tmp.x = 118;	    
+// 	    tmp.x = 115;	    
 // 	    robots[i].ref.push_back(tmp);
 // 	}
 // 	
 // 	if(i>=9 && i<=17)
 // 	{
-// 	    tmp.y = 118;
+// 	    tmp.y = 115;
 // 	    tmp.x = robots[i].curr_pose.x;	    
 // 	    robots[i].ref.push_back(tmp);
 // 	}
@@ -87,13 +87,13 @@ void supervisor::AssignGoal() //Manually assignement of goal
 // 	if(i>=18 && i<=26)
 // 	{
 // 	    tmp.y = robots[i].curr_pose.y;
-// 	    tmp.x = 2;	    
+// 	    tmp.x = 5;	    
 // 	    robots[i].ref.push_back(tmp);
 // 	}
 // 	
 // 	if(i>=27 && i<=36)
 // 	{
-// 	    tmp.y = 2;
+// 	    tmp.y = 5;
 // 	    tmp.x = robots[i].curr_pose.x;	    
 // 	    robots[i].ref.push_back(tmp);
 // 	}
@@ -311,12 +311,12 @@ void supervisor::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 5 && dist < 8)
+			    if(dist >= 6 && dist < 8)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
 			    
-			    if(dist < 5)
+			    if(dist < 6)
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
 				
@@ -328,7 +328,7 @@ void supervisor::run()
 
 			}
 			
-			/*if(robots[i].curr_pose.x <= 14.5 && robots[i].curr_pose.x >= 13.5 &&  robots[i].curr_pose.y <= 17.5 && robots[i].curr_pose.y >= 16.5 || 
+/*			if(robots[i].curr_pose.x <= 14.5 && robots[i].curr_pose.x >= 13.5 &&  robots[i].curr_pose.y <= 17.5 && robots[i].curr_pose.y >= 16.5 || 
 			    robots[i].curr_pose.x <= 23.5 && robots[i].curr_pose.x >= 22.5 && robots[i].curr_pose.y <= 14.5 && robots[i].curr_pose.y >= 13.5||
 			    robots[i].curr_pose.x <= 26.5 && robots[i].curr_pose.x >= 25.5 && robots[i].curr_pose.y <= 23.5 && robots[i].curr_pose.y >= 22.5 ||
 			    robots[i].curr_pose.x <= 17.5 && robots[i].curr_pose.x >= 16.5 && robots[i].curr_pose.y <= 26.5 && robots[i].curr_pose.y >= 25.5 )
@@ -345,7 +345,7 @@ void supervisor::run()
 		}
 	    }
 	    
-	    if(robots[i].err_lin < 0.5) //DELETE ROBOT
+	    if(robots[i].err_lin < 0.8 && robots[i].ref.size() == 1) //DELETE ROBOT
 	    {
 		stdr_robot::HandleRobot handler;
 		std::string name("robot" + std::to_string(robots[i].id));
@@ -365,6 +365,8 @@ void supervisor::run()
 		    ROS_ERROR("%s", ex.what());
 		}
 		robots.erase(robots.begin() + i);
+// 		controller_pubs[i].shutdown();
+// 		controller_pubs.erase(robots.begin() + i);
 		n--;
 	    }
 	}
@@ -404,19 +406,22 @@ void supervisor::run()
 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
 	    {
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.5*robots[i].err_lin;	
+// 		robots[i].twist.linear.x = 0.05*robots[i].err_lin; // MULTI CROSS
+		robots[i].twist.linear.x = 0.5*robots[i].err_lin;  // SINGLE CROSS
+
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 0.2*robots[i].err_lin;
+// 		robots[i].twist.linear.x = 0.02*robots[i].err_lin; // MULTI CROSS
+		robots[i].twist.linear.x = 0.2*robots[i].err_lin;  // SINGLE CROSS
 	    }
 	    if(robots[i].state == state_machine_STATE::STOP)
 	    {
 		robots[i].twist.angular.z = 0.0;
 		robots[i].twist.linear.x = 0.0;	
 	    }
-	    controller_pubs[i].publish(robots[i].twist);
+	    controller_pubs[robots[i].id].publish(robots[i].twist);
 	}
 
 	ros::spinOnce();
