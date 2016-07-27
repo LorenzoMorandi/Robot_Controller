@@ -26,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   stdr_robot
   stdr_parser
+  lemon_ros
 )
 
 ## System dependencies are found with CMake's conventions

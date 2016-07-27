@@ -12,6 +12,17 @@
 #include <stdr_parser/stdr_parser.h>
 #include "math.h"
 #include <sstream>
+#include <iostream>
+#include <lemon/lgf_reader.h>
+#include <lemon/graph_to_eps.h>
+#include <lemon/math.h>
+#include <lemon/dijkstra.h>
+#include <lemon/concepts/digraph.h>
+#include <lemon/smart_graph.h>
+#include <lemon/list_graph.h>
+#include <lemon/path.h>
+#include <lemon/bin_heap.h>
+
 
 
 enum class state_machine_STATE {ROTATE_ONLY, MOVE_AND_ROTATE, MOVE_SLOW, STOP};
@@ -53,6 +64,7 @@ private:
 public:
     supervisor();
     ~supervisor();
+    void compute_path();
     void init();
     void run();
 };

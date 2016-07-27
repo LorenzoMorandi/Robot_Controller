@@ -231,6 +231,77 @@ bool supervisor::evolve_state_machines(int i)	//State Machine evolution
     return false;
 }
 
+void supervisor::compute_path()
+{
+    using namespace lemon;
+    using namespace std;
+
+    typedef SmartDigraph Graph;
+    typedef SmartDigraph::Node Node;
+    typedef SmartDigraph::ArcMap<int> LengthMap;
+    typedef SmartDigraph::NodeMap<double> DistMap;
+    typedef SmartDigraph::NodeMap<double> CoordMap;
+    typedef SmartDigraph::NodeMap<int> IdMap;
+    typedef dim2::Point<double> Point;
+
+
+    Graph g;
+    LengthMap len(g);
+    DistMap dist(g);
+    CoordMap coord_x(g);
+    CoordMap coord_y(g);
+    IdMap id(g);
+
+    SmartDigraph::NodeMap<Point> coords(g);
+
+    try 
+    {
+	digraphReader(g, ros::package::getPath("robot_controller") + "/graph/prova_grafo.lgf").
+	arcMap("length", len).
+	nodeMap("coordinates_x",coord_x). 
+	nodeMap("coordinates_y",coord_y).
+	nodeMap("label",id).
+	
+	run();
+    } 
+    catch (Exception& error) 
+    { 
+	std::cerr << "Error: " << error.what() << std::endl;
+	exit(1);
+    }
+
+    for (SmartDigraph::NodeIt n(g); n != INVALID; ++n) 
+    {
+	coord_x[n]=coord_x[n]*0.0381;
+	coord_y[n]=coord_y[n]*0.0381;
+	coords[n]=Point(coord_x[n], coord_y[n]);
+    }
+
+    for (SmartDigraph::NodeIt n(g); n != INVALID; ++n) 
+    {
+	for (SmartDigraph::NodeIt p(g); p != INVALID; ++p) 
+	{
+	    Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+		
+	    dijkstra_test.run(n);
+		
+	    if (dijkstra_test.dist(p) > 0)
+	    {
+		std::cout << "The distance of node " << g.id(p) << " from node " << g.id(n) << " is: "
+			    << dijkstra_test.dist(p) << std::endl;
+
+		std::cout << "The shortest path from " << g.id(n) << " to " << g.id(p) <<" goes through the following "  
+			<< "nodes (the first one is " << g.id(p) << ", the last one is " << g.id(n) << "): " << std::endl;
+		for (Node v=p;v != n; v=dijkstra_test.predNode(v)) 
+		{
+
+		    std::cout << g.id(v) << "<-";
+		}
+		std::cout << g.id(n) << std::endl;
+	    }
+	}      
+    }
+}
 
 void supervisor::init()
 {

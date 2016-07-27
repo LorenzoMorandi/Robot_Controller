@@ -7,6 +7,7 @@ int main(int argc, char **argv)
     
     supervisor supervis;
 
+    supervis.compute_path();
     supervis.init();
     supervis.run();
 

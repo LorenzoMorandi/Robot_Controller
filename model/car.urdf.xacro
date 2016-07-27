@@ -9,7 +9,7 @@
 	<visual>
 	    <origin xyz="0 0 0" rpy="0 0 0"/>
 	    <geometry>
-		<mesh filename="file://$(find robot_controller)/model/car.dae" scale="0.015 0.015 0.015"/>
+		<mesh filename="file://$(find robot_controller)/model/car.dae" scale="0.012 0.012 0.012"/>
 	    </geometry>
 	    <material name="blue">
 		<color rgba="0 0 .8 1"/>
