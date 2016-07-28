@@ -62,112 +62,112 @@ void supervisor::ReadPoses() //Read from tf the robots position
     }
 }
 
-void supervisor::AssignGoal() //Manually assignement of goal
-{
-    geometry_msgs::Pose2D tmp;
-    
-    //GOAL FOR MULTI CROSS SCENARIO
-    
-//     for(int i = 0; i < n; i++)
-//     {
-// 	if(i>=0 && i<=8)
-// 	{
-// 	    tmp.y = robots[i].curr_pose.y;
-// 	    tmp.x = 115;	    
-// 	    robots[i].ref.push_back(tmp);
-// 	}
-// 	
-// 	if(i>=9 && i<=17)
-// 	{
-// 	    tmp.y = 115;
-// 	    tmp.x = robots[i].curr_pose.x;	    
-// 	    robots[i].ref.push_back(tmp);
-// 	}
-// 	
-// 	if(i>=18 && i<=26)
-// 	{
-// 	    tmp.y = robots[i].curr_pose.y;
-// 	    tmp.x = 5;	    
-// 	    robots[i].ref.push_back(tmp);
-// 	}
-// 	
-// 	if(i>=27 && i<=36)
-// 	{
-// 	    tmp.y = 5;
-// 	    tmp.x = robots[i].curr_pose.x;	    
-// 	    robots[i].ref.push_back(tmp);
-// 	}
-//     }
-
-    //GOAL FOR SINGLE CROSS SCENARIO
-    
-    //robot 0 goal sequences
-    tmp.y = robots[0].curr_pose.y;
-    tmp.x = 14;	    
-    robots[0].ref.push_back(tmp);
-    tmp.x = 23;	 
-    tmp.y = 25;
-    robots[0].ref.push_back(tmp);
-    tmp.x = 23;	 
-    tmp.y = 35;
-    robots[0].ref.push_back(tmp);
-    
-    //robot 1 goal sequences
-    tmp.x = 17;	 
-    tmp.y = 15; 
-    robots[1].ref.push_back(tmp);
-    tmp.x = 17;	 
-    tmp.y = 5; 
-    robots[1].ref.push_back(tmp);
-    
-    //robot 2 goal sequences
-    tmp.x = robots[2].curr_pose.x;
-    tmp.y = 10;	    
-    robots[2].ref.push_back(tmp);
-    tmp.y = 20;	    
-    robots[2].ref.push_back(tmp);
-    tmp.y = 38;	    
-    robots[2].ref.push_back(tmp);
-    
-    //robot 3 goal sequences
-    tmp.x = robots[3].curr_pose.x;
-    tmp.y = 20;	    
-    robots[3].ref.push_back(tmp);
-    tmp.y = 38;	    
-    robots[3].ref.push_back(tmp);
-    
-    //robot 4 goal sequences
-    tmp.y = robots[4].curr_pose.y;
-    tmp.x = 30;	    
-    robots[4].ref.push_back(tmp);
-    tmp.x = 20;	    
-    robots[4].ref.push_back(tmp);
-    tmp.x = 5;	    
-    robots[4].ref.push_back(tmp);
-    
-    //robot 5 goal sequences
-    tmp.y = robots[5].curr_pose.y;
-    tmp.x = 20;	    
-    robots[5].ref.push_back(tmp);
-    tmp.x = 5;	    
-    robots[5].ref.push_back(tmp);
-    
-    //robot 6 goal sequences
-    tmp.x = robots[6].curr_pose.x;
-    tmp.y = 30;	    
-    robots[6].ref.push_back(tmp);
-    tmp.y = 20;	    
-    robots[6].ref.push_back(tmp);
-    tmp.y = 5;	    
-    robots[6].ref.push_back(tmp);
-    
-    //robot 7 goal sequences
-    tmp.x = robots[7].curr_pose.x;
-    tmp.y = 20;	    
-    robots[7].ref.push_back(tmp);
-    tmp.y = 5;	    
-    robots[7].ref.push_back(tmp);
-}
+// void supervisor::AssignGoal() //Manually assignement of goal
+// {
+//     geometry_msgs::Pose2D tmp;
+//     
+//     //GOAL FOR MULTI CROSS SCENARIO
+//     
+// //     for(int i = 0; i < n; i++)
+// //     {
+// // 	if(i>=0 && i<=8)
+// // 	{
+// // 	    tmp.y = robots[i].curr_pose.y;
+// // 	    tmp.x = 115;	    
+// // 	    robots[i].ref.push_back(tmp);
+// // 	}
+// // 	
+// // 	if(i>=9 && i<=17)
+// // 	{
+// // 	    tmp.y = 115;
+// // 	    tmp.x = robots[i].curr_pose.x;	    
+// // 	    robots[i].ref.push_back(tmp);
+// // 	}
+// // 	
+// // 	if(i>=18 && i<=26)
+// // 	{
+// // 	    tmp.y = robots[i].curr_pose.y;
+// // 	    tmp.x = 5;	    
+// // 	    robots[i].ref.push_back(tmp);
+// // 	}
+// // 	
+// // 	if(i>=27 && i<=36)
+// // 	{
+// // 	    tmp.y = 5;
+// // 	    tmp.x = robots[i].curr_pose.x;	    
+// // 	    robots[i].ref.push_back(tmp);
+// // 	}
+// //     }
+// 
+//     //GOAL FOR SINGLE CROSS SCENARIO
+//     
+//     //robot 0 goal sequences
+//     tmp.y = robots[0].curr_pose.y;
+//     tmp.x = 14;	    
+//     robots[0].ref.push_back(tmp);
+//     tmp.x = 23;	 
+//     tmp.y = 25;
+//     robots[0].ref.push_back(tmp);
+//     tmp.x = 23;	 
+//     tmp.y = 35;
+//     robots[0].ref.push_back(tmp);
+//     
+//     //robot 1 goal sequences
+//     tmp.x = 17;	 
+//     tmp.y = 15; 
+//     robots[1].ref.push_back(tmp);
+//     tmp.x = 17;	 
+//     tmp.y = 5; 
+//     robots[1].ref.push_back(tmp);
+//     
+//     //robot 2 goal sequences
+//     tmp.x = robots[2].curr_pose.x;
+//     tmp.y = 10;	    
+//     robots[2].ref.push_back(tmp);
+//     tmp.y = 20;	    
+//     robots[2].ref.push_back(tmp);
+//     tmp.y = 38;	    
+//     robots[2].ref.push_back(tmp);
+//     
+//     //robot 3 goal sequences
+//     tmp.x = robots[3].curr_pose.x;
+//     tmp.y = 20;	    
+//     robots[3].ref.push_back(tmp);
+//     tmp.y = 38;	    
+//     robots[3].ref.push_back(tmp);
+//     
+//     //robot 4 goal sequences
+//     tmp.y = robots[4].curr_pose.y;
+//     tmp.x = 30;	    
+//     robots[4].ref.push_back(tmp);
+//     tmp.x = 20;	    
+//     robots[4].ref.push_back(tmp);
+//     tmp.x = 5;	    
+//     robots[4].ref.push_back(tmp);
+//     
+//     //robot 5 goal sequences
+//     tmp.y = robots[5].curr_pose.y;
+//     tmp.x = 20;	    
+//     robots[5].ref.push_back(tmp);
+//     tmp.x = 5;	    
+//     robots[5].ref.push_back(tmp);
+//     
+//     //robot 6 goal sequences
+//     tmp.x = robots[6].curr_pose.x;
+//     tmp.y = 30;	    
+//     robots[6].ref.push_back(tmp);
+//     tmp.y = 20;	    
+//     robots[6].ref.push_back(tmp);
+//     tmp.y = 5;	    
+//     robots[6].ref.push_back(tmp);
+//     
+//     //robot 7 goal sequences
+//     tmp.x = robots[7].curr_pose.x;
+//     tmp.y = 20;	    
+//     robots[7].ref.push_back(tmp);
+//     tmp.y = 5;	    
+//     robots[7].ref.push_back(tmp);
+// }
 
 double supervisor::LinearErrY(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
 {
@@ -277,35 +277,58 @@ void supervisor::compute_path()
 	coords[n]=Point(coord_x[n], coord_y[n]);
     }
 
-    for (SmartDigraph::NodeIt n(g); n != INVALID; ++n) 
+    std::vector<Node> start;
+    start.push_back(g.nodeFromId(4));
+    start.push_back(g.nodeFromId(2));
+    start.push_back(g.nodeFromId(8));
+    start.push_back(g.nodeFromId(15));
+    
+    std::vector<Node> goals;
+    goals.push_back(g.nodeFromId(7));
+    goals.push_back(g.nodeFromId(9));
+    goals.push_back(g.nodeFromId(16));
+    goals.push_back(g.nodeFromId(11));
+   
+    
+    for (int i = 0; i < start.size(); i++) 
     {
-	for (SmartDigraph::NodeIt p(g); p != INVALID; ++p) 
+	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+	    
+	dijkstra_test.run(start.at(i), goals.at(i));
+	   
+	if (dijkstra_test.dist(goals.at(i)) > 0)
 	{
-	    Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
-		
-	    dijkstra_test.run(n);
-		
-	    if (dijkstra_test.dist(p) > 0)
+// 	    std::cout << "The distance of node " << g.id(p) << " from node " << g.id(n) << " is: "
+// 			<< dijkstra_test.dist(p) << std::endl;
+// 
+// 	    std::cout << "The shortest path from " << g.id(n) << " to " << g.id(p) <<" goes through the following "  
+// 		    << "nodes (the first one is " << g.id(p) << ", the last one is " << g.id(n) << "): " << std::endl;
+
+// 	    std::cout << "Path robot " << i << ": ";
+	    int a=0;
+	    
+	    for (Node v = goals.at(i); v != start.at(i); v = dijkstra_test.predNode(v)) 
 	    {
-		std::cout << "The distance of node " << g.id(p) << " from node " << g.id(n) << " is: "
-			    << dijkstra_test.dist(p) << std::endl;
+		ROS_INFO_STREAM("maiale deh " << std::to_string(i));
 
-		std::cout << "The shortest path from " << g.id(n) << " to " << g.id(p) <<" goes through the following "  
-			<< "nodes (the first one is " << g.id(p) << ", the last one is " << g.id(n) << "): " << std::endl;
-		for (Node v=p;v != n; v=dijkstra_test.predNode(v)) 
-		{
+		geometry_msgs::Pose2D tmp;
+		tmp.y = coord_y[v];
+		tmp.x = coord_x[v];	    
+		ROS_INFO_STREAM(tmp);
 
-		    std::cout << g.id(v) << "<-";
-		}
-		std::cout << g.id(n) << std::endl;
+		robots[i].ref.push_back(tmp);
+// 		std::cout << " node " << g.id(v) << " x: " << robots[i].ref[a].x << " y: " << robots[i].ref[a].y;
+// 		a++;
+		ROS_INFO_STREAM("maiale deh " << std::to_string(i));
 	    }
-	}      
+	    std::reverse(robots[i].ref.begin(),robots[i].ref.end());
+	}     
     }
 }
 
 void supervisor::init()
 {
-    pnh.param<int>("robot_number", n, 8);
+    pnh.param<int>("robot_number", n, 4);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name = "robot";
     
@@ -324,9 +347,9 @@ void supervisor::init()
 	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
 	controller_pubs.push_back(tmp_pub);
     }
-    
+
+    compute_path();
     ReadPoses();
-    AssignGoal();
 }
 
 void supervisor::run()
@@ -416,7 +439,7 @@ void supervisor::run()
 		}
 	    }
 	    
-	    if(robots[i].err_lin < 0.8 && robots[i].ref.size() == 1) //DELETE ROBOT
+	    if(robots[i].err_lin < 0.05 && robots[i].ref.size() == 1) //DELETE ROBOT
 	    {
 		stdr_robot::HandleRobot handler;
 		std::string name("robot" + std::to_string(robots[i].id));
