@@ -171,15 +171,15 @@ void supervisor::init()
     stdr_robot::HandleRobot handler;
     std::srand(std::time(0));
         
-    Node n1=g.nodeFromId(random_generator()); //4
-    Node n2=g.nodeFromId(random_generator()); //2
-    Node n3=g.nodeFromId(random_generator()); //8
-    Node n4=g.nodeFromId(random_generator()); //15
+    Node n0=g.nodeFromId(random_generator()); 
+    Node n1=g.nodeFromId(random_generator()); 
+    Node n2=g.nodeFromId(random_generator()); 
+    Node n3=g.nodeFromId(random_generator()); 
     
-    ROS_INFO_STREAM("Initial Position robot0: "<< g.id(n1));
-    ROS_INFO_STREAM("Initial Position robot1: "<< g.id(n2));
-    ROS_INFO_STREAM("Initial Position robot2: "<< g.id(n3));
-    ROS_INFO_STREAM("Initial Position robot3: "<< g.id(n4));  
+    ROS_INFO_STREAM("Initial Position robot0: "<< g.id(n0));
+    ROS_INFO_STREAM("Initial Position robot1: "<< g.id(n1));
+    ROS_INFO_STREAM("Initial Position robot2: "<< g.id(n2));
+    ROS_INFO_STREAM("Initial Position robot3: "<< g.id(n3));  
    
     if(ros::ok())
     {
@@ -198,8 +198,8 @@ void supervisor::init()
 		exit(1);
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
-	    msg.initialPose.x = coord_x[n1]; 
-	    msg.initialPose.y = coord_y[n1]; 
+	    msg.initialPose.x = coord_x[n0]; 
+	    msg.initialPose.y = coord_y[n0]; 
 	    msg.initialPose.theta = 0 + 0.3; 
 	
 	
@@ -228,8 +228,8 @@ void supervisor::init()
 		exit(1);
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
-	    msg.initialPose.x =coord_x[n2]; 
-	    msg.initialPose.y =coord_y[n2]; 
+	    msg.initialPose.x =coord_x[n1]; 
+	    msg.initialPose.y =coord_y[n1]; 
 	    msg.initialPose.theta = 0 + 0.3; 
 	
 	
@@ -258,8 +258,8 @@ void supervisor::init()
 		exit(1);
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
-	    msg.initialPose.x = coord_x[n3];
-	    msg.initialPose.y = coord_y[n3];
+	    msg.initialPose.x = coord_x[n2];
+	    msg.initialPose.y = coord_y[n2];
 	    msg.initialPose.theta = M_PI + 0.3; 
 	
 	
@@ -288,8 +288,8 @@ void supervisor::init()
 		exit(1);
 	    }
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
-	    msg.initialPose.x =  coord_x[n4]; 
-	    msg.initialPose.y =  coord_y[n4]; 
+	    msg.initialPose.x =  coord_x[n3]; 
+	    msg.initialPose.y =  coord_y[n3]; 
 	    msg.initialPose.theta = M_PI + 0.3; 	
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
@@ -339,10 +339,10 @@ void supervisor::init()
     //********************* COMPUTE PATH **********************//
     
     std::vector<Node> start;
+    start.push_back(n0);
     start.push_back(n1);
     start.push_back(n2);
     start.push_back(n3);
-    start.push_back(n4);
     
     std::vector<Node> goals;
     goals.push_back(g.nodeFromId(7));
@@ -356,6 +356,8 @@ void supervisor::init()
 	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
 	    
 	dijkstra_test.run(start.at(i), goals.at(i));
+	
+	std::cout << "PATH Robot" << i << ": ";
 	   
 	if (dijkstra_test.dist(goals.at(i)) > 0)
 	{   
@@ -366,8 +368,11 @@ void supervisor::init()
 		tmp.x = coord_x[v];	    
 		
 		robots[i].ref.push_back(tmp);
-
+		
+		std::cout << g.id(v) << " <- ";
 	    }
+	    std::cout << g.id(start.at(i))<< std::endl;
+
 	    std::reverse(robots[i].ref.begin(),robots[i].ref.end());
 	}
 	else
