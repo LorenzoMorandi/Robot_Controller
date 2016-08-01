@@ -13,6 +13,9 @@
 #include "math.h"
 #include <sstream>
 #include <iostream>
+#include <random>
+#include <vector>
+#include <algorithm>
 #include <lemon/lgf_reader.h>
 #include <lemon/graph_to_eps.h>
 #include <lemon/math.h>
@@ -59,9 +62,12 @@ private:
     tf::TransformListener listener;
     
     int n;
+    std::vector<int> v = {0, 1, 2, 3, 4, 6, 8, 14, 15};
+
     
 private:
     void ReadPoses();
+    int random_generator();
     double LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference);
     double LinearErrY(geometry_msgs::Pose2D current,  std::vector<geometry_msgs::Pose2D> reference);
     bool evolve_state_machines(int i);

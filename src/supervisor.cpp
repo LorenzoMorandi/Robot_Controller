@@ -111,6 +111,14 @@ bool supervisor::evolve_state_machines(int i)	//State Machine evolution
     return false;
 }
 
+int supervisor::random_generator()
+{
+    std::random_shuffle ( v.begin(), v.end() );
+    int random_variable= v[0];
+    v.erase(v.begin()+0);
+    return random_variable;
+}
+
 void supervisor::init()
 {
     ROS_INFO_STREAM("START");
@@ -162,11 +170,16 @@ void supervisor::init()
     
     stdr_robot::HandleRobot handler;
     std::srand(std::time(0));
+        
+    Node n1=g.nodeFromId(random_generator()); //4
+    Node n2=g.nodeFromId(random_generator()); //2
+    Node n3=g.nodeFromId(random_generator()); //8
+    Node n4=g.nodeFromId(random_generator()); //15
     
-    Node n1=g.nodeFromId(4);
-    Node n2=g.nodeFromId(2);
-    Node n3=g.nodeFromId(8);
-    Node n4=g.nodeFromId(15);
+    ROS_INFO_STREAM("Initial Position robot0: "<< g.id(n1));
+    ROS_INFO_STREAM("Initial Position robot1: "<< g.id(n2));
+    ROS_INFO_STREAM("Initial Position robot2: "<< g.id(n3));
+    ROS_INFO_STREAM("Initial Position robot3: "<< g.id(n4));  
    
     if(ros::ok())
     {
