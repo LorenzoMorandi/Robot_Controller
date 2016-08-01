@@ -22,8 +22,14 @@
 #include <lemon/list_graph.h>
 #include <lemon/path.h>
 #include <lemon/bin_heap.h>
+#include <stdr_robot/handle_robot.h>
+#include <stdr_parser/stdr_parser.h>
+#include <ros/package.h>
+#include <cstdlib>
+#include <ctime>
 
-
+using namespace lemon;
+using namespace std;
 
 enum class state_machine_STATE {ROTATE_ONLY, MOVE_AND_ROTATE, MOVE_SLOW, STOP};
 enum state_transition {road_free, move_rot, near_car, stop_now, rot_only};
@@ -53,10 +59,9 @@ private:
     tf::TransformListener listener;
     
     int n;
-
+    
 private:
     void ReadPoses();
-    void AssignGoal();
     double LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference);
     double LinearErrY(geometry_msgs::Pose2D current,  std::vector<geometry_msgs::Pose2D> reference);
     bool evolve_state_machines(int i);
@@ -64,7 +69,6 @@ private:
 public:
     supervisor();
     ~supervisor();
-    void compute_path();
     void init();
     void run();
 };

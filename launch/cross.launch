@@ -11,5 +11,5 @@
 	<node name="$(anon stdr_gui_node)" pkg="stdr_gui" type="stdr_gui_node"/>
 	
 	<!--spawn robots-->
-	<node name="spawner" pkg="robot_controller" type="spawn_robots_cross"/>
+<!--	<node name="spawner" pkg="robot_controller" type="spawn_robots_cross"/>-->
 </launch>

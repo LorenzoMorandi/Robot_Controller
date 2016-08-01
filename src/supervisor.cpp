@@ -1,18 +1,5 @@
 #include "supervisor.h"
 
-void printRobot(Robot r) //Print the robot state and transition
-{
-    switch(r.state)
-    {
-	case state_machine_STATE::ROTATE_ONLY: ROS_INFO_STREAM("ROTATE_ONLY"); break;
-	case state_machine_STATE::MOVE_AND_ROTATE: ROS_INFO_STREAM("MOVE_AND_ROTATE"); break;
-	case state_machine_STATE::MOVE_SLOW: ROS_INFO_STREAM("MOVE_SLOW"); break;
-	case state_machine_STATE::STOP: ROS_INFO_STREAM("STOP"); break;
-	default: ROS_INFO_STREAM("FAIL"); break;
-    }
-    ROS_INFO_STREAM(r.transition);
-}
-
 state_transition getMax(std::vector<state_transition> v) //Assign value for every transition and take the max value
 {
     int v_max = 0;
@@ -61,113 +48,6 @@ void supervisor::ReadPoses() //Read from tf the robots position
 	}
     }
 }
-
-// void supervisor::AssignGoal() //Manually assignement of goal
-// {
-//     geometry_msgs::Pose2D tmp;
-//     
-//     //GOAL FOR MULTI CROSS SCENARIO
-//     
-// //     for(int i = 0; i < n; i++)
-// //     {
-// // 	if(i>=0 && i<=8)
-// // 	{
-// // 	    tmp.y = robots[i].curr_pose.y;
-// // 	    tmp.x = 115;	    
-// // 	    robots[i].ref.push_back(tmp);
-// // 	}
-// // 	
-// // 	if(i>=9 && i<=17)
-// // 	{
-// // 	    tmp.y = 115;
-// // 	    tmp.x = robots[i].curr_pose.x;	    
-// // 	    robots[i].ref.push_back(tmp);
-// // 	}
-// // 	
-// // 	if(i>=18 && i<=26)
-// // 	{
-// // 	    tmp.y = robots[i].curr_pose.y;
-// // 	    tmp.x = 5;	    
-// // 	    robots[i].ref.push_back(tmp);
-// // 	}
-// // 	
-// // 	if(i>=27 && i<=36)
-// // 	{
-// // 	    tmp.y = 5;
-// // 	    tmp.x = robots[i].curr_pose.x;	    
-// // 	    robots[i].ref.push_back(tmp);
-// // 	}
-// //     }
-// 
-//     //GOAL FOR SINGLE CROSS SCENARIO
-//     
-//     //robot 0 goal sequences
-//     tmp.y = robots[0].curr_pose.y;
-//     tmp.x = 14;	    
-//     robots[0].ref.push_back(tmp);
-//     tmp.x = 23;	 
-//     tmp.y = 25;
-//     robots[0].ref.push_back(tmp);
-//     tmp.x = 23;	 
-//     tmp.y = 35;
-//     robots[0].ref.push_back(tmp);
-//     
-//     //robot 1 goal sequences
-//     tmp.x = 17;	 
-//     tmp.y = 15; 
-//     robots[1].ref.push_back(tmp);
-//     tmp.x = 17;	 
-//     tmp.y = 5; 
-//     robots[1].ref.push_back(tmp);
-//     
-//     //robot 2 goal sequences
-//     tmp.x = robots[2].curr_pose.x;
-//     tmp.y = 10;	    
-//     robots[2].ref.push_back(tmp);
-//     tmp.y = 20;	    
-//     robots[2].ref.push_back(tmp);
-//     tmp.y = 38;	    
-//     robots[2].ref.push_back(tmp);
-//     
-//     //robot 3 goal sequences
-//     tmp.x = robots[3].curr_pose.x;
-//     tmp.y = 20;	    
-//     robots[3].ref.push_back(tmp);
-//     tmp.y = 38;	    
-//     robots[3].ref.push_back(tmp);
-//     
-//     //robot 4 goal sequences
-//     tmp.y = robots[4].curr_pose.y;
-//     tmp.x = 30;	    
-//     robots[4].ref.push_back(tmp);
-//     tmp.x = 20;	    
-//     robots[4].ref.push_back(tmp);
-//     tmp.x = 5;	    
-//     robots[4].ref.push_back(tmp);
-//     
-//     //robot 5 goal sequences
-//     tmp.y = robots[5].curr_pose.y;
-//     tmp.x = 20;	    
-//     robots[5].ref.push_back(tmp);
-//     tmp.x = 5;	    
-//     robots[5].ref.push_back(tmp);
-//     
-//     //robot 6 goal sequences
-//     tmp.x = robots[6].curr_pose.x;
-//     tmp.y = 30;	    
-//     robots[6].ref.push_back(tmp);
-//     tmp.y = 20;	    
-//     robots[6].ref.push_back(tmp);
-//     tmp.y = 5;	    
-//     robots[6].ref.push_back(tmp);
-//     
-//     //robot 7 goal sequences
-//     tmp.x = robots[7].curr_pose.x;
-//     tmp.y = 20;	    
-//     robots[7].ref.push_back(tmp);
-//     tmp.y = 5;	    
-//     robots[7].ref.push_back(tmp);
-// }
 
 double supervisor::LinearErrY(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
 {
@@ -231,10 +111,11 @@ bool supervisor::evolve_state_machines(int i)	//State Machine evolution
     return false;
 }
 
-void supervisor::compute_path()
+void supervisor::init()
 {
-    using namespace lemon;
-    using namespace std;
+    ROS_INFO_STREAM("START");
+
+    //********************* LOAD GRAPH **********************//
 
     typedef SmartDigraph Graph;
     typedef SmartDigraph::Node Node;
@@ -243,17 +124,15 @@ void supervisor::compute_path()
     typedef SmartDigraph::NodeMap<double> CoordMap;
     typedef SmartDigraph::NodeMap<int> IdMap;
     typedef dim2::Point<double> Point;
-
-
+    
     Graph g;
     LengthMap len(g);
     DistMap dist(g);
     CoordMap coord_x(g);
     CoordMap coord_y(g);
     IdMap id(g);
-
     SmartDigraph::NodeMap<Point> coords(g);
-
+    
     try 
     {
 	digraphReader(g, ros::package::getPath("robot_controller") + "/graph/prova_grafo.lgf").
@@ -276,58 +155,149 @@ void supervisor::compute_path()
 	coord_y[n]=coord_y[n]*0.0381;
 	coords[n]=Point(coord_x[n], coord_y[n]);
     }
-
-    std::vector<Node> start;
-    start.push_back(g.nodeFromId(4));
-    start.push_back(g.nodeFromId(2));
-    start.push_back(g.nodeFromId(8));
-    start.push_back(g.nodeFromId(15));
     
-    std::vector<Node> goals;
-    goals.push_back(g.nodeFromId(7));
-    goals.push_back(g.nodeFromId(9));
-    goals.push_back(g.nodeFromId(16));
-    goals.push_back(g.nodeFromId(11));
+    ROS_INFO_STREAM("GRAPH LOADED");
+    
+    //********************* SPAWN ROBOTS **********************//
+    
+    stdr_robot::HandleRobot handler;
+    std::srand(std::time(0));
+    
+    Node n1=g.nodeFromId(4);
+    Node n2=g.nodeFromId(2);
+    Node n3=g.nodeFromId(8);
+    Node n4=g.nodeFromId(15);
    
-    
-    for (int i = 0; i < start.size(); i++) 
+    if(ros::ok())
     {
-	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
-	    
-	dijkstra_test.run(start.at(i), goals.at(i));
-	   
-	if (dijkstra_test.dist(goals.at(i)) > 0)
+	stdr_msgs::RobotMsg msg;
+	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/simple_robot.xml";
+
+	for(int i = 0; i < 1; i++)
 	{
-// 	    std::cout << "The distance of node " << g.id(p) << " from node " << g.id(n) << " is: "
-// 			<< dijkstra_test.dist(p) << std::endl;
-// 
-// 	    std::cout << "The shortest path from " << g.id(n) << " to " << g.id(p) <<" goes through the following "  
-// 		    << "nodes (the first one is " << g.id(p) << ", the last one is " << g.id(n) << "): " << std::endl;
-
-// 	    std::cout << "Path robot " << i << ": ";
-	    int a=0;
-	    
-	    for (Node v = goals.at(i); v != start.at(i); v = dijkstra_test.predNode(v)) 
+	    try 
 	    {
-		ROS_INFO_STREAM("maiale deh " << std::to_string(i));
-
-		geometry_msgs::Pose2D tmp;
-		tmp.y = coord_y[v];
-		tmp.x = coord_x[v];	    
-		ROS_INFO_STREAM(tmp);
-
-		robots[i].ref.push_back(tmp);
-// 		std::cout << " node " << g.id(v) << " x: " << robots[i].ref[a].x << " y: " << robots[i].ref[a].y;
-// 		a++;
-		ROS_INFO_STREAM("maiale deh " << std::to_string(i));
+		msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
 	    }
-	    std::reverse(robots[i].ref.begin(),robots[i].ref.end());
-	}     
-    }
-}
+	    catch(stdr_parser::ParserException& ex)
+	    {
+		ROS_ERROR("[STDR_PARSER] %s", ex.what());
+		exit(1);
+	    }
+	    double random_variable = std::rand()%7 +0.2 -M_PI;
+	    msg.initialPose.x = coord_x[n1]; 
+	    msg.initialPose.y = coord_y[n1]; 
+	    msg.initialPose.theta = 0 + 0.3; 
+	
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+		exit(1);
+	    }
+	}
+	
+	for(int i = 0; i < 1; i++)
+	{
+	    try 
+	    {
+		msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	    }
+	    catch(stdr_parser::ParserException& ex)
+	    {
+		ROS_ERROR("[STDR_PARSER] %s", ex.what());
+		exit(1);
+	    }
+	    double random_variable = std::rand()%7 +0.2 -M_PI;
+	    msg.initialPose.x =coord_x[n2]; 
+	    msg.initialPose.y =coord_y[n2]; 
+	    msg.initialPose.theta = 0 + 0.3; 
+	
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+		exit(1);
+	    }
+	}
+	
+	for(int i = 0; i < 1; i++)
+	{
+	    try 
+	    {
+		msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	    }
+	    catch(stdr_parser::ParserException& ex)
+	    {
+		ROS_ERROR("[STDR_PARSER] %s", ex.what());
+		exit(1);
+	    }
+	    double random_variable = std::rand()%7 +0.2 -M_PI;
+	    msg.initialPose.x = coord_x[n3];
+	    msg.initialPose.y = coord_y[n3];
+	    msg.initialPose.theta = M_PI + 0.3; 
+	
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+		exit(1);
+	    }
+	}
 
-void supervisor::init()
-{
+	for(int i = 0; i < 1; i++)
+	{
+	    try 
+	    {
+		msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	    }
+	    catch(stdr_parser::ParserException& ex)
+	    {
+		ROS_ERROR("[STDR_PARSER] %s", ex.what());
+		exit(1);
+	    }
+	    double random_variable = std::rand()%7 +0.2 -M_PI;
+	    msg.initialPose.x =  coord_x[n4]; 
+	    msg.initialPose.y =  coord_y[n4]; 
+	    msg.initialPose.theta = M_PI + 0.3; 	
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+		exit(1);
+	    }
+	}
+	ros::spinOnce();
+    }
+    
+    ROS_INFO_STREAM("ROBOTS SPAWNED");
+
+    //*********************INITIALIZATION**********************//
+    
     pnh.param<int>("robot_number", n, 4);
     ROS_INFO_STREAM("Robot Number: " << n);
     std::string name = "robot";
@@ -348,14 +318,61 @@ void supervisor::init()
 	controller_pubs.push_back(tmp_pub);
     }
 
-    compute_path();
     ReadPoses();
+    
+    ROS_INFO_STREAM("INITIALIZATION OK");
+
+    
+    //********************* COMPUTE PATH **********************//
+    
+    std::vector<Node> start;
+    start.push_back(n1);
+    start.push_back(n2);
+    start.push_back(n3);
+    start.push_back(n4);
+    
+    std::vector<Node> goals;
+    goals.push_back(g.nodeFromId(7));
+    goals.push_back(g.nodeFromId(9));
+    goals.push_back(g.nodeFromId(16));
+    goals.push_back(g.nodeFromId(11));
+   
+    
+    for (int i = 0; i < start.size(); i++) 
+    {
+	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+	    
+	dijkstra_test.run(start.at(i), goals.at(i));
+	   
+	if (dijkstra_test.dist(goals.at(i)) > 0)
+	{   
+	    for (Node v = goals.at(i); v != start.at(i); v = dijkstra_test.predNode(v)) 
+	    {
+		geometry_msgs::Pose2D tmp;
+		tmp.y = coord_y[v];
+		tmp.x = coord_x[v];	    
+		
+		robots[i].ref.push_back(tmp);
+
+	    }
+	    std::reverse(robots[i].ref.begin(),robots[i].ref.end());
+	}
+	else
+	{
+	    geometry_msgs::Pose2D tmp;
+	    tmp.x = robots[i].curr_pose.x;
+	    tmp.y = robots[i].curr_pose.y;	    
+	    robots[i].ref.push_back(tmp); 
+	}
+    }
+    
+    ROS_INFO_STREAM("PATH COMPUTED");
 }
 
 void supervisor::run()
 {
     ros::Rate loop_rate(30);
-    ROS_INFO_STREAM("START SUPERVISOR");
+    ROS_INFO_STREAM("RUN CONTROL");
 
     
     while (ros::ok())
@@ -459,8 +476,6 @@ void supervisor::run()
 		    ROS_ERROR("%s", ex.what());
 		}
 		robots.erase(robots.begin() + i);
-// 		controller_pubs[i].shutdown();
-// 		controller_pubs.erase(robots.begin() + i);
 		n--;
 	    }
 	}
@@ -501,14 +516,21 @@ void supervisor::run()
 	    {
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
 // 		robots[i].twist.linear.x = 0.05*robots[i].err_lin; // MULTI CROSS
-		robots[i].twist.linear.x = 0.5*robots[i].err_lin;  // SINGLE CROSS
-
+		robots[i].twist.linear.x = 1*robots[i].err_lin;  // SINGLE CROSS
+		if (robots[i].twist.linear.x > 7)
+		    robots[i].twist.linear.x = 7;
+		if (robots[i].twist.linear.x < 0.1)
+		    robots[i].twist.linear.x = 0.1;
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
 		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
 // 		robots[i].twist.linear.x = 0.02*robots[i].err_lin; // MULTI CROSS
 		robots[i].twist.linear.x = 0.2*robots[i].err_lin;  // SINGLE CROSS
+		if (robots[i].twist.linear.x > 2)
+		    robots[i].twist.linear.x = 2;
+		if (robots[i].twist.linear.x < 0.05)
+		    robots[i].twist.linear.x = 0.05;		
 	    }
 	    if(robots[i].state == state_machine_STATE::STOP)
 	    {

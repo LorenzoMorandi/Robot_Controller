@@ -46,7 +46,7 @@
 		ROS_ERROR("%s", ex.what());
 		return -1;
 	    }
-	    usleep(100*1000);
+// 	    usleep(100*1000);
 	}
 	
 	for(int i = 0; i < 1; i++)
@@ -77,7 +77,7 @@
 		ROS_ERROR("%s", ex.what());
 		return -1;
 	    }
-	    usleep(100*1000);
+// 	    usleep(100*1000);
 	}
 	
 	for(int i = 0; i < 1; i++)
@@ -108,7 +108,7 @@
 		ROS_ERROR("%s", ex.what());
 		return -1;
 	    }
-	    usleep(100*1000);
+// 	    usleep(100*1000);
 	}
 
 	    
@@ -140,7 +140,7 @@
 		ROS_ERROR("%s", ex.what());
 		return -1;
 	    }
-	    usleep(100*1000);
+// 	    usleep(100*1000);
 	}
 	ros::spinOnce();
     }
