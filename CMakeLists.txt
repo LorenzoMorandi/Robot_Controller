@@ -145,12 +145,8 @@ include_directories( ${catkin_INCLUDE_DIRS} )
 # add_dependencies(robot_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(robot_controller_node src/controller_main.cpp src/controller.cpp)
-add_executable(supervisor src/supervisor_main.cpp src/supervisor.cpp)
-add_executable(spawn_robots_road src/spawn_robots_road.cpp)
-add_executable(spawn_robots_cross src/spawn_robots_cross.cpp)
-add_executable(spawn_robots_multi_cross src/spawn_robots_multi_cross.cpp)
-
+add_executable(supervisor_cross src/supervisor_cross_main.cpp src/supervisor_cross.cpp)
+add_executable(supervisor_multi_cross src/supervisor_multi_cross_main.cpp src/supervisor_multi_cross.cpp)
 
 
 ## Add cmake target dependencies of the executable
@@ -158,11 +154,8 @@ add_executable(spawn_robots_multi_cross src/spawn_robots_multi_cross.cpp)
 # add_dependencies(robot_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(robot_controller_node ${catkin_LIBRARIES})
-target_link_libraries(supervisor ${catkin_LIBRARIES})
-target_link_libraries(spawn_robots_road ${catkin_LIBRARIES} stdr_handle_robot)
-target_link_libraries(spawn_robots_cross ${catkin_LIBRARIES} stdr_handle_robot)
-target_link_libraries(spawn_robots_multi_cross ${catkin_LIBRARIES} stdr_handle_robot)
+target_link_libraries(supervisor_cross ${catkin_LIBRARIES})
+target_link_libraries(supervisor_multi_cross ${catkin_LIBRARIES})
 
 
 

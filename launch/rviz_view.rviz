@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /TF1
       Splitter Ratio: 0.5
-    Tree Height: 595
+    Tree Height: 359
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -64,117 +64,13 @@ Visualization Manager:
           Value: true
         robot1/base:
           Value: true
-        robot10:
-          Value: true
-        robot10/base:
-          Value: true
-        robot11:
-          Value: true
-        robot11/base:
-          Value: true
-        robot12:
-          Value: true
-        robot12/base:
-          Value: true
-        robot13:
-          Value: true
-        robot13/base:
-          Value: true
-        robot14:
-          Value: true
-        robot14/base:
-          Value: true
-        robot15:
-          Value: true
-        robot15/base:
-          Value: true
-        robot16:
-          Value: true
-        robot16/base:
-          Value: true
-        robot17:
-          Value: true
-        robot17/base:
-          Value: true
-        robot18:
-          Value: true
-        robot18/base:
-          Value: true
-        robot19:
-          Value: true
-        robot19/base:
-          Value: true
         robot2:
           Value: true
         robot2/base:
           Value: true
-        robot20:
-          Value: true
-        robot20/base:
-          Value: true
-        robot21:
-          Value: true
-        robot21/base:
-          Value: true
-        robot22:
-          Value: true
-        robot22/base:
-          Value: true
-        robot23:
-          Value: true
-        robot23/base:
-          Value: true
-        robot24:
-          Value: true
-        robot24/base:
-          Value: true
-        robot25:
-          Value: true
-        robot25/base:
-          Value: true
-        robot26:
-          Value: true
-        robot26/base:
-          Value: true
-        robot27:
-          Value: true
-        robot27/base:
-          Value: true
-        robot28:
-          Value: true
-        robot28/base:
-          Value: true
-        robot29:
-          Value: true
-        robot29/base:
-          Value: true
         robot3:
           Value: true
         robot3/base:
-          Value: true
-        robot30:
-          Value: true
-        robot30/base:
-          Value: true
-        robot31:
-          Value: true
-        robot31/base:
-          Value: true
-        robot32:
-          Value: true
-        robot32/base:
-          Value: true
-        robot33:
-          Value: true
-        robot33/base:
-          Value: true
-        robot34:
-          Value: true
-        robot34/base:
-          Value: true
-        robot35:
-          Value: true
-        robot35/base:
           Value: true
         robot4:
           Value: true
@@ -192,14 +88,6 @@ Visualization Manager:
           Value: true
         robot7/base:
           Value: true
-        robot8:
-          Value: true
-        robot8/base:
-          Value: true
-        robot9:
-          Value: true
-        robot9/base:
-          Value: true
         world:
           Value: true
       Marker Scale: 1
@@ -211,114 +99,7 @@ Visualization Manager:
         world:
           map:
             map_static:
-              robot0:
-                robot0/base:
-                  {}
-              robot1:
-                robot1/base:
-                  {}
-              robot10:
-                robot10/base:
-                  {}
-              robot11:
-                robot11/base:
-                  {}
-              robot12:
-                robot12/base:
-                  {}
-              robot13:
-                robot13/base:
-                  {}
-              robot14:
-                robot14/base:
-                  {}
-              robot15:
-                robot15/base:
-                  {}
-              robot16:
-                robot16/base:
-                  {}
-              robot17:
-                robot17/base:
-                  {}
-              robot18:
-                robot18/base:
-                  {}
-              robot19:
-                robot19/base:
-                  {}
-              robot2:
-                robot2/base:
-                  {}
-              robot20:
-                robot20/base:
-                  {}
-              robot21:
-                robot21/base:
-                  {}
-              robot22:
-                robot22/base:
-                  {}
-              robot23:
-                robot23/base:
-                  {}
-              robot24:
-                robot24/base:
-                  {}
-              robot25:
-                robot25/base:
-                  {}
-              robot26:
-                robot26/base:
-                  {}
-              robot27:
-                robot27/base:
-                  {}
-              robot28:
-                robot28/base:
-                  {}
-              robot29:
-                robot29/base:
-                  {}
-              robot3:
-                robot3/base:
-                  {}
-              robot30:
-                robot30/base:
-                  {}
-              robot31:
-                robot31/base:
-                  {}
-              robot32:
-                robot32/base:
-                  {}
-              robot33:
-                robot33/base:
-                  {}
-              robot34:
-                robot34/base:
-                  {}
-              robot35:
-                robot35/base:
-                  {}
-              robot4:
-                robot4/base:
-                  {}
-              robot5:
-                robot5/base:
-                  {}
-              robot6:
-                robot6/base:
-                  {}
-              robot7:
-                robot7/base:
-                  {}
-              robot8:
-                robot8/base:
-                  {}
-              robot9:
-                robot9/base:
-                  {}
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 0.7
@@ -1110,19 +891,19 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 147.23
+      Distance: 70.3917
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 54.3225
-        Y: 56.4199
-        Z: 13.1975
+        X: 22.0234
+        Y: 30.8873
+        Z: -19.9766
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.3998
+      Pitch: 0.9848
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
       Yaw: 4.71316

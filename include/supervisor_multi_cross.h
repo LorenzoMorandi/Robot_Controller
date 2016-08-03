@@ -1,5 +1,5 @@
-#ifndef SUPERVISOR_H
-#define SUPERVISOR_H
+#ifndef SUPERVISOR__MULTI_CROSS_H
+#define SUPERVISOR_MULTI_CROSS_H
 
 #include "ros/ros.h"
 #include "ros/console.h"
@@ -50,7 +50,7 @@ struct Robot
     int id;
 };
 
-class supervisor
+class supervisor_multi_cross
 {
 private:
     ros::NodeHandle nh;
@@ -62,7 +62,7 @@ private:
     tf::TransformListener listener;
     
     int n;
-    std::vector<int> v = {0, 1, 2, 3, 4, 6, 8, 14, 15};
+    std::vector<int> v = {0, 9, 18, 27, 36, 45, 54, 63, 72, 81, 83, 85, 87, 90, 91, 93, 95,98, 100, 102, 103};
 
     
 private:
@@ -73,8 +73,8 @@ private:
     bool evolve_state_machines(int i);
     
 public:
-    supervisor();
-    ~supervisor();
+    supervisor_multi_cross();
+    ~supervisor_multi_cross();
     void init();
     void run();
 };

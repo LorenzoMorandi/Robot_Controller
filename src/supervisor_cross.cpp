@@ -1,4 +1,4 @@
-#include "supervisor.h"
+#include "supervisor_cross.h"
 
 state_transition getMax(std::vector<state_transition> v) //Assign value for every transition and take the max value
 {
@@ -20,17 +20,17 @@ state_transition getMax(std::vector<state_transition> v) //Assign value for ever
     if(v_max == 4) return state_transition::rot_only;
 }
 
-supervisor::supervisor():pnh("~") //Constructor
+supervisor_cross::supervisor_cross():pnh("~") //Constructor
 {
     n=0;
 }
 
-supervisor::~supervisor() //Desctructor
+supervisor_cross::~supervisor_cross() //Desctructor
 {
     
 }
 
-void supervisor::ReadPoses() //Read from tf the robots position
+void supervisor_cross::ReadPoses() //Read from tf the robots position
 {
     for(int i = 0; i < n; i++)
     {
@@ -49,19 +49,19 @@ void supervisor::ReadPoses() //Read from tf the robots position
     }
 }
 
-double supervisor::LinearErrY(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
+double supervisor_cross::LinearErrY(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
 {
     geometry_msgs::Pose2D reff = reference[0];
     return  reff.y - current.y;
 }
 
-double supervisor::LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
+double supervisor_cross::LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
 {
     geometry_msgs::Pose2D reff = reference[0];
     return  reff.x - current.x;
 }
 
-bool supervisor::evolve_state_machines(int i)	//State Machine evolution
+bool supervisor_cross::evolve_state_machines(int i)	//State Machine evolution
 {
     if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
     {
@@ -111,7 +111,7 @@ bool supervisor::evolve_state_machines(int i)	//State Machine evolution
     return false;
 }
 
-int supervisor::random_generator()
+int supervisor_cross::random_generator()
 {
     std::random_shuffle ( v.begin(), v.end() );
     int random_variable= v[0];
@@ -119,7 +119,7 @@ int supervisor::random_generator()
     return random_variable;
 }
 
-void supervisor::init()
+void supervisor_cross::init()
 {
     ROS_INFO_STREAM("START");
 
@@ -174,12 +174,7 @@ void supervisor::init()
     Node n0=g.nodeFromId(random_generator()); 
     Node n1=g.nodeFromId(random_generator()); 
     Node n2=g.nodeFromId(random_generator()); 
-    Node n3=g.nodeFromId(random_generator()); 
-    
-    ROS_INFO_STREAM("Initial Position robot0: "<< g.id(n0));
-    ROS_INFO_STREAM("Initial Position robot1: "<< g.id(n1));
-    ROS_INFO_STREAM("Initial Position robot2: "<< g.id(n2));
-    ROS_INFO_STREAM("Initial Position robot3: "<< g.id(n3));  
+    Node n3=g.nodeFromId(random_generator());  
    
     if(ros::ok())
     {
@@ -349,8 +344,12 @@ void supervisor::init()
     goals.push_back(g.nodeFromId(9));
     goals.push_back(g.nodeFromId(16));
     goals.push_back(g.nodeFromId(11));
-   
     
+    ROS_WARN_STREAM("Initial Node ID robot0: "<< g.id(n0) << " ----> Goal Node ID robot0: 7");
+    ROS_WARN_STREAM("Initial Node ID robot1: "<< g.id(n1) << " ----> Goal Node ID robot1: 9");
+    ROS_WARN_STREAM("Initial Node ID robot2: "<< g.id(n2) << " ----> Goal Node ID robot2: 16");
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n3) << " ----> Goal Node ID robot3: 11"); 
+   
     for (int i = 0; i < start.size(); i++) 
     {
 	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
@@ -385,9 +384,11 @@ void supervisor::init()
     }
     
     ROS_INFO_STREAM("PATH COMPUTED");
+    
+    usleep(1000*1000);
 }
 
-void supervisor::run()
+void supervisor_cross::run()
 {
     ros::Rate loop_rate(30);
     ROS_INFO_STREAM("RUN CONTROL");
@@ -562,3 +563,4 @@ void supervisor::run()
 	loop_rate.sleep();
     }
 }
+

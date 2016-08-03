@@ -10,10 +10,10 @@
       <y>0</y>
       <theta>0</theta>
     </initial_pose>
-    <!--<sonar>
+    <sonar>
 	<sonar_specifications>
 	    <cone_angle>1.256</cone_angle>
-	    <max_range>5</max_range>
+	    <max_range>6</max_range>
 	    <min_range>0</min_range>
 	    <frequency>10</frequency>
 	    <pose>
@@ -22,7 +22,7 @@
 	    <theta>0</theta>
 	    </pose>
 	</sonar_specifications>
-    </sonar>-->
+    </sonar>
   </robot_specifications>
 </robot>
 
