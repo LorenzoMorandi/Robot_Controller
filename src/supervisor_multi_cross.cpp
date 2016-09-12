@@ -170,7 +170,7 @@ void supervisor_multi_cross::init()
     
     stdr_robot::HandleRobot handler;
     std::srand(std::time(0));
-        
+    
     Node n0=g.nodeFromId(random_generator()); 
     Node n1=g.nodeFromId(random_generator()); 
     Node n2=g.nodeFromId(random_generator()); 
@@ -189,6 +189,7 @@ void supervisor_multi_cross::init()
     Node n15=g.nodeFromId(random_generator());  
 
     std::vector<Node> random_start_node;
+
     random_start_node.push_back(n0);
     random_start_node.push_back(n1);
     random_start_node.push_back(n2);
@@ -226,7 +227,6 @@ void supervisor_multi_cross::init()
 	    msg.initialPose.x = coord_x[random_start_node[i]]; 
 	    msg.initialPose.y = coord_y[random_start_node[i]]; 
 	    msg.initialPose.theta = random_variable; 
-	
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
 	
@@ -291,11 +291,23 @@ void supervisor_multi_cross::init()
     goals.push_back(g.nodeFromId(97));
     goals.push_back(g.nodeFromId(104));
 
+    ROS_WARN_STREAM("Initial Node ID robot0: "<< g.id(n0) << " ----> Goal Node ID robot0: " << g.id(goals[0]));
+    ROS_WARN_STREAM("Initial Node ID robot1: "<< g.id(n1) << " ----> Goal Node ID robot1: " << g.id(goals[1]));
+    ROS_WARN_STREAM("Initial Node ID robot2: "<< g.id(n2) << " ----> Goal Node ID robot2: " << g.id(goals[2]));
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n3) << " ----> Goal Node ID robot3: " << g.id(goals[3])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n4) << " ----> Goal Node ID robot3: " << g.id(goals[4])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n5) << " ----> Goal Node ID robot3: " << g.id(goals[5])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n6) << " ----> Goal Node ID robot3: " << g.id(goals[6])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n7) << " ----> Goal Node ID robot3: " << g.id(goals[7])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n8) << " ----> Goal Node ID robot3: " << g.id(goals[8])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n9) << " ----> Goal Node ID robot3: " << g.id(goals[9])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n10) << " ----> Goal Node ID robot3: " << g.id(goals[10])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n11) << " ----> Goal Node ID robot3: " << g.id(goals[11])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n12) << " ----> Goal Node ID robot3: " << g.id(goals[12])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n13) << " ----> Goal Node ID robot3: " << g.id(goals[13])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n14) << " ----> Goal Node ID robot3: " << g.id(goals[14])); 
+    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n15) << " ----> Goal Node ID robot3: " << g.id(goals[15])); 
 
-    ROS_WARN_STREAM("Initial Node ID robot0: "<< g.id(n0) << " ----> Goal Node ID robot0: 7");
-    ROS_WARN_STREAM("Initial Node ID robot1: "<< g.id(n1) << " ----> Goal Node ID robot1: 9");
-    ROS_WARN_STREAM("Initial Node ID robot2: "<< g.id(n2) << " ----> Goal Node ID robot2: 16");
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n3) << " ----> Goal Node ID robot3: 11"); 
    
     for (int i = 0; i < random_start_node.size(); i++) 
     {
@@ -354,7 +366,7 @@ void supervisor_multi_cross::run()
 	    double fy = LinearErrY(robots[i].curr_pose, robots[i].ref);
 	    
 	    //Compute linear and angular error for robot i
-	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta + 0.01;
+	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta; /*+ 0.1;*/
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
 	    	    	    
 	    if(robots[i].err_lin < 1 && robots[i].ref.size()>1)

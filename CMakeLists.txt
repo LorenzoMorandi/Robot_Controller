@@ -147,6 +147,7 @@ include_directories( ${catkin_INCLUDE_DIRS} )
 ## Declare a C++ executable
 add_executable(supervisor_cross src/supervisor_cross_main.cpp src/supervisor_cross.cpp)
 add_executable(supervisor_multi_cross src/supervisor_multi_cross_main.cpp src/supervisor_multi_cross.cpp)
+add_executable(pisa_prova src/pisa_prova_main.cpp src/pisa_prova.cpp)
 
 
 ## Add cmake target dependencies of the executable
@@ -156,6 +157,7 @@ add_executable(supervisor_multi_cross src/supervisor_multi_cross_main.cpp src/su
 ## Specify libraries to link a library or executable target against
 target_link_libraries(supervisor_cross ${catkin_LIBRARIES})
 target_link_libraries(supervisor_multi_cross ${catkin_LIBRARIES})
+target_link_libraries(pisa_prova ${catkin_LIBRARIES})
 
 
 

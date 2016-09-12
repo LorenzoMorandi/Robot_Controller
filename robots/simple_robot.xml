@@ -2,7 +2,7 @@
   <robot_specifications>
     <footprint>
       <footprint_specifications>
-        <radius>0.5</radius>
+        <radius>1.0</radius>
       </footprint_specifications>
     </footprint>
     <initial_pose>

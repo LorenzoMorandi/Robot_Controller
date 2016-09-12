@@ -62,8 +62,7 @@ private:
     tf::TransformListener listener;
     
     int n;
-    std::vector<int> v = {0, 9, 18, 27, 36, 45, 54, 63, 72, 81, 83, 85, 87, 90, 91, 93, 95,98, 100, 102, 103};
-
+    std::vector<int> v = {0, 9, 18, 27, 36, 45, 54, 63, 72, 81, 83, 85, 87, 90, 91, 93, 95,98, 100, 102, 103}; //MULTI CROSS
     
 private:
     void ReadPoses();
