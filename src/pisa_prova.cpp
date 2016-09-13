@@ -24,7 +24,7 @@ pisa_prova::pisa_prova():pnh("~") //Constructor
 {
     n=0;
     
-    for (int i=0; i<=699; i++)
+    for (int i=0; i<702; i++)
     {
 	start.push_back(i);
 	goal.push_back(i);
@@ -134,7 +134,8 @@ void pisa_prova::init()
 
     typedef SmartDigraph Graph;
     typedef SmartDigraph::Node Node;
-    typedef SmartDigraph::ArcMap<int> LengthMap;
+    typedef SmartDigraph::Arc Edge;
+    typedef SmartDigraph::ArcMap<double> LengthMap;
     typedef SmartDigraph::NodeMap<double> DistMap;
     typedef SmartDigraph::NodeMap<double> CoordMap;
     typedef SmartDigraph::NodeMap<int> IdMap;
@@ -151,7 +152,6 @@ void pisa_prova::init()
     try 
     {
 	digraphReader(g, ros::package::getPath("robot_controller") + "/graph/pisa.lgf").
-	arcMap("length", len).
 	nodeMap("coordinates_x",coord_x). 
 	nodeMap("coordinates_y",coord_y).
 	nodeMap("label",id).
@@ -169,6 +169,12 @@ void pisa_prova::init()
 	coord_x[n]=coord_x[n];
 	coord_y[n]=1861 - coord_y[n];
 	coords[n]=Point(coord_x[n], coord_y[n]);
+    }
+
+    for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
+    {
+	double distance = sqrt((pow((coord_x[g.source(a)] - coord_x[g.target(a)]),2.0))+(pow((coord_y[g.source(a)] - coord_y[g.target(a)]),2.0)));
+	len[a]=distance;
     }
     
     ROS_INFO_STREAM("GRAPH LOADED");
@@ -212,7 +218,7 @@ void pisa_prova::init()
     random_start_node.push_back(n12);
     random_start_node.push_back(n13);
     random_start_node.push_back(n14);
-    random_start_node.push_back(n15);    
+    random_start_node.push_back(n15);  
    
     if(ros::ok())
     {
@@ -391,10 +397,10 @@ void pisa_prova::run()
 	    double fy = LinearErrY(robots[i].curr_pose, robots[i].ref);
 	    
 	    //Compute linear and angular error for robot i
-	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta + 0.1;
+	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta;
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
 	    	    	    
-	    if(robots[i].err_lin < 5 && robots[i].ref.size()>1)
+	    if(robots[i].err_lin < 1 && robots[i].ref.size() > 1)
 		robots[i].ref.erase(robots[i].ref.begin()+0); //SWITCH GOAL
 	    
 	    
@@ -538,6 +544,7 @@ void pisa_prova::run()
 		robots[i].twist.angular.z = 0.0;
 		robots[i].twist.linear.x = 0.0;	
 	    }
+	    	    
 	    controller_pubs[robots[i].id].publish(robots[i].twist);
 	}
 

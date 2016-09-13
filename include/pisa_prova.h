@@ -62,6 +62,8 @@ private:
     tf::TransformListener listener;
     
     int n;
+    int var=0;
+
     std::vector<int> start;
     std::vector<int> goal;
     
