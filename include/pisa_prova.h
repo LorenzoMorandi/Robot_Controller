@@ -64,8 +64,7 @@ private:
     int n;
     int var=0;
 
-    std::vector<int> start;
-    std::vector<int> goal;
+    std::vector<int> node;
     
 private:
     void ReadPoses();

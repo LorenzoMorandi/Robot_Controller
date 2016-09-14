@@ -26,10 +26,8 @@ pisa_prova::pisa_prova():pnh("~") //Constructor
     
     for (int i=0; i<702; i++)
     {
-	start.push_back(i);
-	goal.push_back(i);
+	node.push_back(i);
     }
-
 }
 
 pisa_prova::~pisa_prova() //Desctructor
@@ -129,6 +127,9 @@ int pisa_prova::random_generator(std::vector<int> v)
 void pisa_prova::init()
 {
     ROS_INFO_STREAM("START");
+    
+    pnh.param<int>("robot_number", n, 10);
+    ROS_INFO_STREAM("Robot Number: " << n);
 
     //********************* LOAD GRAPH **********************//
 
@@ -184,42 +185,13 @@ void pisa_prova::init()
     stdr_robot::HandleRobot handler;
     std::srand(std::time(0));
     
-    Node n0=g.nodeFromId(random_generator(start)); 
-    Node n1=g.nodeFromId(random_generator(start)); 
-    Node n2=g.nodeFromId(random_generator(start)); 
-    Node n3=g.nodeFromId(random_generator(start));  
-    Node n4=g.nodeFromId(random_generator(start));  
-    Node n5=g.nodeFromId(random_generator(start));  
-    Node n6=g.nodeFromId(random_generator(start));  
-    Node n7=g.nodeFromId(random_generator(start));  
-    Node n8=g.nodeFromId(random_generator(start));  
-    Node n9=g.nodeFromId(random_generator(start));  
-    Node n10=g.nodeFromId(random_generator(start));  
-    Node n11=g.nodeFromId(random_generator(start));  
-    Node n12=g.nodeFromId(random_generator(start));  
-    Node n13=g.nodeFromId(random_generator(start));  
-    Node n14=g.nodeFromId(random_generator(start));  
-    Node n15=g.nodeFromId(random_generator(start));  
-
     std::vector<Node> random_start_node;
 
-    random_start_node.push_back(n0);
-    random_start_node.push_back(n1);
-    random_start_node.push_back(n2);
-    random_start_node.push_back(n3);
-    random_start_node.push_back(n4);
-    random_start_node.push_back(n5);
-    random_start_node.push_back(n6);
-    random_start_node.push_back(n7);
-    random_start_node.push_back(n8);
-    random_start_node.push_back(n9);
-    random_start_node.push_back(n10);
-    random_start_node.push_back(n11);
-    random_start_node.push_back(n12);
-    random_start_node.push_back(n13);
-    random_start_node.push_back(n14);
-    random_start_node.push_back(n15);  
-   
+    for(int i=0; i < n; i++)
+    {
+	random_start_node.push_back(g.nodeFromId(random_generator(node))); 
+    }
+    
     if(ros::ok())
     {
 	stdr_msgs::RobotMsg msg;
@@ -260,8 +232,6 @@ void pisa_prova::init()
 
     //*********************INITIALIZATION**********************//
     
-    pnh.param<int>("robot_number", n, 16);
-    ROS_INFO_STREAM("Robot Number: " << n);
     std::string name = "robot";
     
     for (int i = 0; i < n; i++)
@@ -286,59 +256,17 @@ void pisa_prova::init()
 
     //********************* COMPUTE PATH **********************//
 
-    Node g0=g.nodeFromId(random_generator(goal)); 
-    Node g1=g.nodeFromId(random_generator(goal)); 
-    Node g2=g.nodeFromId(random_generator(goal)); 
-    Node g3=g.nodeFromId(random_generator(goal));  
-    Node g4=g.nodeFromId(random_generator(goal));  
-    Node g5=g.nodeFromId(random_generator(goal));  
-    Node g6=g.nodeFromId(random_generator(goal));  
-    Node g7=g.nodeFromId(random_generator(goal));  
-    Node g8=g.nodeFromId(random_generator(goal));  
-    Node g9=g.nodeFromId(random_generator(goal));  
-    Node g10=g.nodeFromId(random_generator(goal));  
-    Node g11=g.nodeFromId(random_generator(goal));  
-    Node g12=g.nodeFromId(random_generator(goal));  
-    Node g13=g.nodeFromId(random_generator(goal));  
-    Node g14=g.nodeFromId(random_generator(goal));  
-    Node g15=g.nodeFromId(random_generator(goal));  
-    
     std::vector<Node> random_goal_node;
+    
+    for(int i=0; i < n; i++)
+    {
+	random_goal_node.push_back(g.nodeFromId(random_generator(node))); 
+    }
 
-    random_goal_node.push_back(g0);
-    random_goal_node.push_back(g1);
-    random_goal_node.push_back(g2);
-    random_goal_node.push_back(g3);
-    random_goal_node.push_back(g4);
-    random_goal_node.push_back(g5);
-    random_goal_node.push_back(g6);
-    random_goal_node.push_back(g7);
-    random_goal_node.push_back(g8);
-    random_goal_node.push_back(g9);
-    random_goal_node.push_back(g10);
-    random_goal_node.push_back(g11);
-    random_goal_node.push_back(g12);
-    random_goal_node.push_back(g13);
-    random_goal_node.push_back(g14);
-    random_goal_node.push_back(g15);
-
-    ROS_WARN_STREAM("Initial Node ID robot0: "<< g.id(n0) << " ----> Goal Node ID robot0: " << g.id(random_goal_node[0]));
-    ROS_WARN_STREAM("Initial Node ID robot1: "<< g.id(n1) << " ----> Goal Node ID robot1: " << g.id(random_goal_node[1]));
-    ROS_WARN_STREAM("Initial Node ID robot2: "<< g.id(n2) << " ----> Goal Node ID robot2: " << g.id(random_goal_node[2]));
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n3) << " ----> Goal Node ID robot3: " << g.id(random_goal_node[3])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n4) << " ----> Goal Node ID robot4: " << g.id(random_goal_node[4])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n5) << " ----> Goal Node ID robot5: " << g.id(random_goal_node[5])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n6) << " ----> Goal Node ID robot6: " << g.id(random_goal_node[6])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n7) << " ----> Goal Node ID robot7: " << g.id(random_goal_node[7])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n8) << " ----> Goal Node ID robot8: " << g.id(random_goal_node[8])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n9) << " ----> Goal Node ID robot9: " << g.id(random_goal_node[9])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n10) << " ----> Goal Node ID robot10: " << g.id(random_goal_node[10])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n11) << " ----> Goal Node ID robot11: " << g.id(random_goal_node[11])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n12) << " ----> Goal Node ID robot12: " << g.id(random_goal_node[12])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n13) << " ----> Goal Node ID robot13: " << g.id(random_goal_node[13])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n14) << " ----> Goal Node ID robot14: " << g.id(random_goal_node[14])); 
-    ROS_WARN_STREAM("Initial Node ID robot3: "<< g.id(n15) << " ----> Goal Node ID robot15: " << g.id(random_goal_node[15])); 
-
+//     for(int i = 0; i < n; i++)
+//     {
+// 	ROS_WARN_STREAM("Initial Node ID robot " << i << ": "<< g.id(random_start_node.at(i)) << " ----> Goal Node ID robot " << i << ": " << g.id(random_goal_node.at(i)));
+//     }
    
     for (int i = 0; i < random_start_node.size(); i++) 
     {
@@ -346,7 +274,7 @@ void pisa_prova::init()
 	    
 	dijkstra_test.run(random_start_node.at(i), random_goal_node.at(i));
 	
-	std::cout << "PATH Robot" << i << ": ";
+// 	std::cout << "PATH Robot" << i << ": ";
 	   
 	if (dijkstra_test.dist(random_goal_node.at(i)) > 0)
 	{   
@@ -358,9 +286,9 @@ void pisa_prova::init()
 		
 		robots[i].ref.push_back(tmp);
 		
-		std::cout << g.id(v) << " <- ";
+// 		std::cout << g.id(v) << " <- ";
 	    }
-	    std::cout << g.id(random_start_node.at(i))<< std::endl;
+// 	    std::cout << g.id(random_start_node.at(i))<< std::endl;
 
 	    std::reverse(robots[i].ref.begin(),robots[i].ref.end());
 	}
@@ -415,9 +343,6 @@ void pisa_prova::run()
 		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
 		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
-
-// 		    if (i < j)
-// 			double alpha = M_PI; //half vision angle
 		    
 		    if(fabs(sin(robots[i].err_ang)) > 0.01)
 		    {
@@ -431,36 +356,21 @@ void pisa_prova::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 6 && dist < 8)
+			    if(dist >= 8 && dist < 10)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
 			    
-			    if(dist < 6)
+			    if(dist < 8)
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
 				
-				if(robots[i].id > robots[j].id && dist > 3) 
+				if(robots[i].id > robots[j].id && dist > 5) 
 				    matrix.at(i).at(j) = state_transition::road_free;
-				if(robots[i].id > robots[j].id && dist < 3)
+				if(robots[i].id > robots[j].id && dist < 5)
 				    matrix.at(i).at(j) = state_transition::stop_now;
 			    }
-
-			}
-			
-/*			if(robots[i].curr_pose.x <= 14.5 && robots[i].curr_pose.x >= 13.5 &&  robots[i].curr_pose.y <= 17.5 && robots[i].curr_pose.y >= 16.5 || 
-			    robots[i].curr_pose.x <= 23.5 && robots[i].curr_pose.x >= 22.5 && robots[i].curr_pose.y <= 14.5 && robots[i].curr_pose.y >= 13.5||
-			    robots[i].curr_pose.x <= 26.5 && robots[i].curr_pose.x >= 25.5 && robots[i].curr_pose.y <= 23.5 && robots[i].curr_pose.y >= 22.5 ||
-			    robots[i].curr_pose.x <= 17.5 && robots[i].curr_pose.x >= 16.5 && robots[i].curr_pose.y <= 26.5 && robots[i].curr_pose.y >= 25.5 )
-			{  
-			    alpha*=2; //half vision angle    
-			    
-			    if(angle < alpha && dist < 13)
-				if(i > j)
-				    matrix.at(i).at(j) = state_transition::road_free;
-				else
-				    matrix.at(i).at(j) = state_transition::stop_now;
-			}	*/	    		    
+			}   
 		    }
 		}
 	    }
@@ -508,40 +418,40 @@ void pisa_prova::run()
 	    {
 		switch(robots[i].state)
 		{
-		    case state_machine_STATE::ROTATE_ONLY: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": ROTATE_ONLY"); break;
-		    case state_machine_STATE::MOVE_AND_ROTATE: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_AND_ROTATE"); break;
-		    case state_machine_STATE::MOVE_SLOW: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_SLOW"); break;
-		    case state_machine_STATE::STOP: ROS_WARN_STREAM("Robot " << std::to_string(i) << ": STOP"); break;
+		    case state_machine_STATE::ROTATE_ONLY: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": ROTATE_ONLY")*/; break;
+		    case state_machine_STATE::MOVE_AND_ROTATE: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_AND_ROTATE")*/; break;
+		    case state_machine_STATE::MOVE_SLOW: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_SLOW"); break*/;
+		    case state_machine_STATE::STOP: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": STOP")*/; break;
 		    default: ROS_WARN_STREAM("FAIL"); break;
 		}
 	    }
 	        
 	    if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
 	    {
-		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
+		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
 		robots[i].twist.linear.x = 0.0;	
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
 	    {
-		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 5*robots[i].err_lin; // MULTI CROSS
-		if (robots[i].twist.linear.x > 10)
+		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.linear.x = 4*robots[i].err_lin; // MULTI CROSS
+		if (robots[i].twist.linear.x > 15)
 		    robots[i].twist.linear.x = 15;
 		if (robots[i].twist.linear.x < 0.5)
-		    robots[i].twist.linear.x = 1;
+		    robots[i].twist.linear.x = 0.5;
 	    }
 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
 	    { 
-		robots[i].twist.angular.z = 3*sin(robots[i].err_ang);
-		robots[i].twist.linear.x = 2*robots[i].err_lin; // MULTI CROSS
-		if (robots[i].twist.linear.x > 5)
+		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
+		robots[i].twist.linear.x = 1.5*robots[i].err_lin; // MULTI CROSS
+		if (robots[i].twist.linear.x > 10)
 		    robots[i].twist.linear.x = 10;
-		if (robots[i].twist.linear.x < 0.1)
+		if (robots[i].twist.linear.x < 0.2)
 		    robots[i].twist.linear.x = 0.2;		
 	    }
 	    if(robots[i].state == state_machine_STATE::STOP)
 	    {
-		robots[i].twist.angular.z = 0.0;
+		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
 		robots[i].twist.linear.x = 0.0;	
 	    }
 	    	    
