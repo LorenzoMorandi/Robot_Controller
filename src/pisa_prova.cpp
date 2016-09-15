@@ -20,7 +20,7 @@ state_transition getMax(std::vector<state_transition> v) //Assign value for ever
     if(v_max == 4) return state_transition::rot_only;
 }
 
-pisa_prova::pisa_prova():pnh("~") //Constructor
+pisa_prova::pisa_prova():pnh("~"),len(g),coord_x(g),coord_y(g),coords(g)  //Constructor
 {
     n=0;
     
@@ -128,34 +128,17 @@ void pisa_prova::init()
 {
     ROS_INFO_STREAM("START");
     
-    pnh.param<int>("robot_number", n, 10);
+    pnh.param<int>("robot_number", n, 1);
     ROS_INFO_STREAM("Robot Number: " << n);
 
     //********************* LOAD GRAPH **********************//
-
-    typedef SmartDigraph Graph;
-    typedef SmartDigraph::Node Node;
-    typedef SmartDigraph::Arc Edge;
-    typedef SmartDigraph::ArcMap<double> LengthMap;
-    typedef SmartDigraph::NodeMap<double> DistMap;
-    typedef SmartDigraph::NodeMap<double> CoordMap;
-    typedef SmartDigraph::NodeMap<int> IdMap;
-    typedef dim2::Point<double> Point;
-    
-    Graph g;
-    LengthMap len(g);
-    DistMap dist(g);
-    CoordMap coord_x(g);
-    CoordMap coord_y(g);
-    IdMap id(g);
-    SmartDigraph::NodeMap<Point> coords(g);
     
     try 
     {
 	digraphReader(g, ros::package::getPath("robot_controller") + "/graph/pisa.lgf").
 	nodeMap("coordinates_x",coord_x). 
 	nodeMap("coordinates_y",coord_y).
-	nodeMap("label",id).
+// 	nodeMap("label",id).
 	
 	run();
     } 
@@ -299,6 +282,9 @@ void pisa_prova::init()
 	    tmp.y = robots[i].curr_pose.y;	    
 	    robots[i].ref.push_back(tmp); 
 	}
+	
+	robots[i].prev_ref.x = coord_x[random_start_node[i]];
+	robots[i].prev_ref.y = coord_y[random_start_node[i]];
     }
     
     ROS_INFO_STREAM("PATH COMPUTED");
@@ -307,10 +293,9 @@ void pisa_prova::init()
 }
 
 void pisa_prova::run()
-{
-    ros::Rate loop_rate(30);
+{   
+    ros::Rate loop_rate(10);
     ROS_INFO_STREAM("RUN CONTROL");
-
     
     while (ros::ok())
     {
@@ -318,9 +303,29 @@ void pisa_prova::run()
 	
 	std::vector<state_transition> tmp(n, state_transition::road_free);
 	std::vector<std::vector<state_transition>> matrix(n, tmp);	//matrix nxn containing state transition info (i,j) e (j,i) 
-	
+	std::vector<int> robot_num(g.arcNum(),0);
+		
 	for(int i = 0; i < n; i++)
 	{
+	    for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
+	    {
+		if(robots[i].curr_pose.x > coord_x[g.source(a)] && robots[i].curr_pose.x < coord_x[g.target(a)] || robots[i].curr_pose.x < coord_x[g.source(a)] && robots[i].curr_pose.x > coord_x[g.target(a)] 
+		    && robots[i].curr_pose.y > coord_y[g.source(a)] && robots[i].curr_pose.y < coord_y[g.target(a)] || robots[i].curr_pose.y < coord_y[g.source(a)] && robots[i].curr_pose.y > coord_y[g.target(a)])
+		{
+		    if(robots[i].ref[0].x == coord_x[g.target(a)] && robots[i].ref[0].y == coord_y[g.target(a)]
+			&& robots[i].prev_ref.x == coord_x[g.source(a)] && robots[i].prev_ref.y == coord_y[g.source(a)])
+		    {
+			if(g.id(a) == prev_value) 
+			    break;
+			
+			robot_num.at(g.id(a))++;
+			ROS_INFO_STREAM("Traffico su arco: " << g.id(a) << " = " << robot_num.at(g.id(a)));
+			prev_value = g.id(a);
+// 			len[a]+=;
+		    }
+		}
+	    }
+	    	    
 	    double fx = LinearErrX(robots[i].curr_pose, robots[i].ref);
 	    double fy = LinearErrY(robots[i].curr_pose, robots[i].ref);
 	    
@@ -329,8 +334,10 @@ void pisa_prova::run()
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
 	    	    	    
 	    if(robots[i].err_lin < 1 && robots[i].ref.size() > 1)
+	    {
+		robots[i].prev_ref = robots[i].ref[0]; 
 		robots[i].ref.erase(robots[i].ref.begin()+0); //SWITCH GOAL
-	    
+	    }
 	    
 	    //Robot i look at all the other robots j
 	    for(int j = 0; j < n; j++)
@@ -435,8 +442,8 @@ void pisa_prova::run()
 	    {
 		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
 		robots[i].twist.linear.x = 4*robots[i].err_lin; // MULTI CROSS
-		if (robots[i].twist.linear.x > 15)
-		    robots[i].twist.linear.x = 15;
+		if (robots[i].twist.linear.x > 10)
+		    robots[i].twist.linear.x = 10;
 		if (robots[i].twist.linear.x < 0.5)
 		    robots[i].twist.linear.x = 0.5;
 	    }
@@ -444,8 +451,8 @@ void pisa_prova::run()
 	    { 
 		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
 		robots[i].twist.linear.x = 1.5*robots[i].err_lin; // MULTI CROSS
-		if (robots[i].twist.linear.x > 10)
-		    robots[i].twist.linear.x = 10;
+		if (robots[i].twist.linear.x > 7)
+		    robots[i].twist.linear.x = 7;
 		if (robots[i].twist.linear.x < 0.2)
 		    robots[i].twist.linear.x = 0.2;		
 	    }

@@ -43,6 +43,7 @@ struct Robot
     geometry_msgs::Twist twist;
     geometry_msgs::Pose2D curr_pose;
     std::vector<geometry_msgs::Pose2D> ref;
+    geometry_msgs::Pose2D prev_ref;
     double err_ang;
     double err_lin;
     std::string transition;
@@ -63,8 +64,24 @@ private:
     
     int n;
     int var=0;
+    int prev_value;
 
     std::vector<int> node;
+    
+    typedef SmartDigraph Graph;   
+    typedef SmartDigraph::ArcMap<double> LengthMap;
+    typedef SmartDigraph::Node Node;
+    typedef SmartDigraph::Arc Edge;
+    typedef SmartDigraph::NodeMap<double> CoordMap;
+    typedef dim2::Point<double> Point;
+//     typedef SmartDigraph::NodeMap<int> IdMap;
+    
+    Graph g;
+    LengthMap len;
+    CoordMap coord_x;
+    CoordMap coord_y;
+    SmartDigraph::NodeMap<Point> coords;
+//     IdMap id;
     
 private:
     void ReadPoses();
