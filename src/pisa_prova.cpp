@@ -339,7 +339,19 @@ void pisa_prova::run()
 	    //Robot i look at all the other robots j
 	    for(int j = 0; j < n; j++)
 	    {
-		if(i != j)
+		if(n==1)
+		{
+		    if(fabs(sin(robots[i].err_ang)) > 0.01)
+		    {
+			matrix.at(i).at(j) = state_transition::rot_only;
+		    }
+		    else 
+		    {
+			matrix.at(i).at(j) = state_transition::move_rot;
+		    }
+		}
+		    
+		if(i != j && n != 1)
 		{
 		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		    double theta = robots[i].curr_pose.theta; //current orientation of i
