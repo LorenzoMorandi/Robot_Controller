@@ -49,6 +49,7 @@ struct Robot
     std::string transition;
     state_machine_STATE state;
     int id;
+    int prev_value;
 };
 
 class pisa_prova
@@ -64,7 +65,6 @@ private:
     
     int n;
     int var=0;
-    int prev_value;
 
     std::vector<int> node;
     

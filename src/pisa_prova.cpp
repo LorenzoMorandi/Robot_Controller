@@ -128,7 +128,7 @@ void pisa_prova::init()
 {
     ROS_INFO_STREAM("START");
     
-    pnh.param<int>("robot_number", n, 1);
+    pnh.param<int>("robot_number", n, 5);
     ROS_INFO_STREAM("Robot Number: " << n);
 
     //********************* LOAD GRAPH **********************//
@@ -309,20 +309,17 @@ void pisa_prova::run()
 	{
 	    for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
 	    {
-		if(robots[i].curr_pose.x > coord_x[g.source(a)] && robots[i].curr_pose.x < coord_x[g.target(a)] || robots[i].curr_pose.x < coord_x[g.source(a)] && robots[i].curr_pose.x > coord_x[g.target(a)] 
-		    && robots[i].curr_pose.y > coord_y[g.source(a)] && robots[i].curr_pose.y < coord_y[g.target(a)] || robots[i].curr_pose.y < coord_y[g.source(a)] && robots[i].curr_pose.y > coord_y[g.target(a)])
+		if(robots[i].ref[0].x == coord_x[g.target(a)] && robots[i].ref[0].y == coord_y[g.target(a)]
+		    && robots[i].prev_ref.x == coord_x[g.source(a)] && robots[i].prev_ref.y == coord_y[g.source(a)])
 		{
-		    if(robots[i].ref[0].x == coord_x[g.target(a)] && robots[i].ref[0].y == coord_y[g.target(a)]
-			&& robots[i].prev_ref.x == coord_x[g.source(a)] && robots[i].prev_ref.y == coord_y[g.source(a)])
-		    {
-			if(g.id(a) == prev_value) 
+			if(g.id(a) == robots[i].prev_value) 
 			    break;
 			
 			robot_num.at(g.id(a))++;
-			ROS_INFO_STREAM("Traffico su arco: " << g.id(a) << " = " << robot_num.at(g.id(a)));
-			prev_value = g.id(a);
+			ROS_INFO_STREAM("Numero Robot su arco " << g.id(a) << " = " << robot_num.at(g.id(a)));
+			ROS_INFO_STREAM("Robot " << robots[i].id << " su arco " << g.id(a));
+			robots[i].prev_value = g.id(a);
 // 			len[a]+=;
-		    }
 		}
 	    }
 	    	    
