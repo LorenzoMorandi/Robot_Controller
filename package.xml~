@@ -18,7 +18,6 @@
     <build_depend>stdr_robot</build_depend>
     <build_depend>stdr_parser</build_depend>
     <build_depend>lemon_ros</build_depend>
-    <build_depend>message_generation</build_depend>
     <run_depend>geometry_msgs</run_depend>
     <run_depend>roscpp</run_depend>
     <run_depend>rospy</run_depend>
@@ -28,9 +27,4 @@
     <run_depend>stdr_robot</run_depend>
     <run_depend>stdr_parser</run_depend>
     <run_depend>lemon_ros</run_depend>
-    <run_depend>message_generation</run_depend>
-    <run_depend>message_runtime</run_depend>
 </package>
-
-
-

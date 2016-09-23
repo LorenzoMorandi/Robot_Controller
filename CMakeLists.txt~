@@ -26,7 +26,9 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   stdr_robot
   stdr_parser
-  )
+  lemon_ros
+  message_generation
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -62,11 +64,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+   FILES
+   robot.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -83,10 +84,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   sensor_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  robot geometry_msgs   sensor_msgs   std_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -120,6 +121,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robot_controller
+  CATKIN_DEPENDS message_runtime
 #  CATKIN_DEPENDS geometry_msgs roscpp rospy sensor_msgs std_msgs tf
 #  DEPENDS system_lib
 )
@@ -144,10 +146,9 @@ include_directories( ${catkin_INCLUDE_DIRS} )
 # add_dependencies(robot_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(robot_controller_node src/controller_main.cpp src/controller.cpp)
-add_executable(supervisor src/supervisor_main.cpp src/supervisor.cpp)
-add_executable(spawn_robots_road src/spawn_robots_road.cpp)
-add_executable(spawn_robots_cross src/spawn_robots_cross.cpp)
+add_executable(supervisor_cross src/supervisor_cross_main.cpp src/supervisor_cross.cpp)
+add_executable(supervisor_multi_cross src/supervisor_multi_cross_main.cpp src/supervisor_multi_cross.cpp)
+add_executable(pisa_prova src/pisa_prova_main.cpp src/pisa_prova.cpp)
 
 
 ## Add cmake target dependencies of the executable
@@ -155,10 +156,10 @@ add_executable(spawn_robots_cross src/spawn_robots_cross.cpp)
 # add_dependencies(robot_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(robot_controller_node ${catkin_LIBRARIES})
-target_link_libraries(supervisor ${catkin_LIBRARIES})
-target_link_libraries(spawn_robot_road ${catkin_LIBRARIES} stdr_handle_robot)
-target_link_libraries(spawn_robot_cross ${catkin_LIBRARIES} stdr_handle_robot)
+target_link_libraries(supervisor_cross ${catkin_LIBRARIES})
+target_link_libraries(supervisor_multi_cross ${catkin_LIBRARIES})
+target_link_libraries(pisa_prova ${catkin_LIBRARIES})
+
 
 
 #############
