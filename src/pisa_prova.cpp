@@ -349,7 +349,7 @@ void pisa_prova::run()
 	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta;    
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
 	    	    	    
-	    if(robots[i].err_lin < 5 && robots[i].ref.size() > 1)
+	    if(robots[i].err_lin < 1 && robots[i].ref.size() > 1)
 	    {
 		robots[i].prev_ref_node = robots[i].ref_node[0]; 
 		robots[i].ref.erase(robots[i].ref.begin()+0); //SWITCH GOAL
@@ -361,7 +361,7 @@ void pisa_prova::run()
 	    {
 		if(n==1)
 		{
-		    if(special_sin(robots[i].err_ang) > 0.1)
+		    if(special_sin(robots[i].err_ang) > 0.05)
 		    {
 			matrix.at(i).at(j) = state_transition::rot_only;
 		    }
@@ -380,7 +380,7 @@ void pisa_prova::run()
 		    
 		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
 		    
-		    if(special_sin(robots[i].err_ang) > 0.1)
+		    if(special_sin(robots[i].err_ang) > 0.05)
 		    {
 			matrix.at(i).at(j) = state_transition::rot_only;
 		    }
@@ -401,9 +401,9 @@ void pisa_prova::run()
 			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
 				
-				if(robots[i].id > robots[j].id && dist > 5) 
+				if(robots[i].id > robots[j].id && dist > 2) 
 				    matrix.at(i).at(j) = state_transition::road_free;
-				if(robots[i].id > robots[j].id && dist < 5)
+				if(robots[i].id > robots[j].id && dist < 2)
 				    matrix.at(i).at(j) = state_transition::stop_now;
 			    }
 			}   
