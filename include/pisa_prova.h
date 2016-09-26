@@ -74,6 +74,7 @@ private:
     
     int n;
     int var=0;
+    double middleweight;
 
     std::vector<int> node;
 
@@ -81,6 +82,7 @@ private:
     
     Graph g;
     LengthMap len;
+    LengthMap init_len;
     CoordMap coord_x;
     CoordMap coord_y;
     SmartDigraph::NodeMap<Point> coords;

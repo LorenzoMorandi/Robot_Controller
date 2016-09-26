@@ -32,7 +32,7 @@ double special_sin(double err_ang)
     }	    
 }
 
-pisa_prova::pisa_prova():pnh("~"),len(g),coord_x(g),coord_y(g),coords(g)  //Constructor
+pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coords(g)  //Constructor
 {
     n=0;
    
@@ -171,7 +171,11 @@ void pisa_prova::init()
     {
 	double distance = sqrt((pow((coord_x[g.source(a)] - coord_x[g.target(a)]),2.0))+(pow((coord_y[g.source(a)] - coord_y[g.target(a)]),2.0)));
 	len[a] = distance;
+	init_len[a] = distance;
+	middleweight+= distance;
     }
+        
+    middleweight = middleweight/702;
     
     ROS_INFO_STREAM("GRAPH LOADED");
        
@@ -322,7 +326,12 @@ void pisa_prova::run()
 	
 	std::vector<state_transition> tmp(n, state_transition::road_free);
 	std::vector<std::vector<state_transition>> matrix(n, tmp);	//matrix nxn containing state transition info (i,j) e (j,i) 
+	
 	std::vector<int> robot_num(g.arcNum(),0);
+// 	for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
+// 	{
+// 	    len[a] = init_len[a];
+// 	}
 		
 	for(int i = 0; i < n; i++)
 	{
@@ -330,15 +339,18 @@ void pisa_prova::run()
 	    {
 		if(robots[i].ref_node[0] == g.target(a) && robots[i].prev_ref_node == g.source(a))
 		{
-			if(g.id(a) == robots[i].prev_value) 
-			    break;
-			
+// 		    if(g.id(a) != robots[i].prev_value) 
+// 		    {
 			robot_num.at(g.id(a))++;
 			
-// 			ROS_INFO_STREAM("Numero Robot su arco " << g.id(a) << " = " << robot_num.at(g.id(a)));
-// 			ROS_INFO_STREAM("Robot " << robots[i].id << " su arco " << g.id(a));
+// 			if(robot_num.at(g.id(a)) > 1)
+// 			{
+// 			    ROS_INFO_STREAM("Numero Robot su arco " << g.id(a) << " = " << robot_num.at(g.id(a)));
+// 			    ROS_INFO_STREAM("Robot " << robots[i].id << " su arco " << g.id(a));
+// 			}
 			robots[i].prev_value = g.id(a);
-// 			len[a]+=;
+			len[a]+= middleweight;
+// 		    }
 		}
 	    }
 	    	    
@@ -392,7 +404,7 @@ void pisa_prova::run()
 		    {			
 			if(angle < alpha) //j is in the vision range of i
 			{
-			    if(dist >= 8 && dist < 10)
+			    if(dist >= 8 && dist < 20)
 			    {
 				matrix.at(i).at(j) = state_transition::near_car;
 			    }
