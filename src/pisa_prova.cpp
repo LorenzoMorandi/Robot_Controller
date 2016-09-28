@@ -1,42 +1,11 @@
 #include "pisa_prova.h"
 
-state_transition getMax(std::vector<state_transition> v) //Assign value for every transition and take the max value
-{
-    int v_max = 0;
-    for(int i = 0; i < v.size(); i++) // Set a numeric value for every transition
-    {
-	int tmp_max;						//Low Priority
-	if(v.at(i) == state_transition::road_free) tmp_max = 0; //	|
-	if(v.at(i) == state_transition::move_rot) tmp_max = 1;	//	|
-	if(v.at(i) == state_transition::near_car) tmp_max = 2;  //	|
-	if(v.at(i) == state_transition::stop_now) tmp_max = 3;	//	|
-	if(v.at(i) == state_transition::rot_only) tmp_max = 4;	//	|
-	if(tmp_max > v_max) v_max = tmp_max;			//High priority
-    }
-    if(v_max == 0) return state_transition::road_free;
-    if(v_max == 1) return state_transition::move_rot;
-    if(v_max == 2) return state_transition::near_car;
-    if(v_max == 3) return state_transition::stop_now;
-    if(v_max == 4) return state_transition::rot_only;
-}
-
-double special_sin(double err_ang) 
-{
-    if(err_ang >= M_PI/2 && err_ang <= 3*M_PI/2 || err_ang <= -M_PI/2 && err_ang >= -3*M_PI/2)
-    {
-	return 1.0;
-    }
-    else
-    {
-	return fabs(sin(err_ang));
-    }	    
-}
-
 pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coords(g)  //Constructor
 {
-    n=0;
+    n = 0;
+    number = 0;
    
-    for (int i=0; i<702; i++)
+    for (int i = 0; i < 702; i++)
     {
 	node.push_back(i);
     }
@@ -64,6 +33,22 @@ void pisa_prova::ReadPoses() //Read from tf the robots position
 	    ros::Duration(1.0).sleep();
 	}
     }
+    
+    for(int i = 0; i < n; i++)
+    {
+	tf::StampedTransform transform;
+	try{
+	    listener.waitForTransform("/world", public_robots[i].robot_name, ros::Time(0), ros::Duration(0) );
+	    listener.lookupTransform("/world", public_robots[i].robot_name, ros::Time(0), transform);
+	    public_robots[i].curr_pose.x = transform.getOrigin().getX();
+	    public_robots[i].curr_pose.y = transform.getOrigin().getY();
+	    public_robots[i].curr_pose.theta = tf::getYaw(transform.getRotation());
+	}
+	catch (tf::TransformException ex){
+	    ROS_ERROR("%s",ex.what());
+	    ros::Duration(1.0).sleep();
+	}
+    }
 }
 
 double pisa_prova::LinearErrY(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference)
@@ -76,6 +61,38 @@ double pisa_prova::LinearErrX(geometry_msgs::Pose2D current, std::vector<geometr
 {
     geometry_msgs::Pose2D reff = reference[0];
     return  reff.x - current.x;
+}
+
+state_transition pisa_prova::getMax(std::vector<state_transition> v) //Assign value for every transition and take the max value
+{
+    int v_max = 0;
+    for(int i = 0; i < v.size(); i++) // Set a numeric value for every transition
+    {
+	int tmp_max;						//Low Priority
+	if(v.at(i) == state_transition::road_free) tmp_max = 0; //	|
+	if(v.at(i) == state_transition::move_rot) tmp_max = 1;	//	|
+	if(v.at(i) == state_transition::near_car) tmp_max = 2;  //	|
+	if(v.at(i) == state_transition::stop_now) tmp_max = 3;	//	|
+	if(v.at(i) == state_transition::rot_only) tmp_max = 4;	//	|
+	if(tmp_max > v_max) v_max = tmp_max;			//High priority
+    }
+    if(v_max == 0) return state_transition::road_free;
+    if(v_max == 1) return state_transition::move_rot;
+    if(v_max == 2) return state_transition::near_car;
+    if(v_max == 3) return state_transition::stop_now;
+    if(v_max == 4) return state_transition::rot_only;
+}
+
+double pisa_prova::special_sin(double err_ang) 
+{
+    if(err_ang >= M_PI/2 && err_ang <= 3*M_PI/2 || err_ang <= -M_PI/2 && err_ang >= -3*M_PI/2)
+    {
+	return 1.0;
+    }
+    else
+    {
+	return fabs(sin(err_ang));
+    }	    
 }
 
 bool pisa_prova::evolve_state_machines(int i)	//State Machine evolution
@@ -128,6 +145,56 @@ bool pisa_prova::evolve_state_machines(int i)	//State Machine evolution
     return false;
 }
 
+bool pisa_prova::evolve_state_machines_public(int i)	//State Machine evolution
+{
+    if(public_robots[i].transition == "stop_now" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	public_robots[i].state = state_machine_STATE::STOP;
+	return true;
+    }
+    if(public_robots[i].transition == "move_rot" && public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(public_robots[i].transition == "rot_only" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	public_robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(public_robots[i].transition == "near_car" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(public_robots[i].transition == "road_free" && public_robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(public_robots[i].transition == "stop_now" && public_robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	public_robots[i].state = state_machine_STATE::STOP;
+	return true;
+    }
+    if(public_robots[i].transition == "road_free" && public_robots[i].state == state_machine_STATE::STOP)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(public_robots[i].transition == "rot_only" && public_robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	public_robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(public_robots[i].transition == "rot_only" && public_robots[i].state == state_machine_STATE::STOP)
+    {
+	public_robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    return false;
+}
+
 int pisa_prova::random_generator(std::vector<int> v)
 {
     std::random_shuffle (v.begin(), v.end());
@@ -136,14 +203,9 @@ int pisa_prova::random_generator(std::vector<int> v)
     return random_variable;
 }
 
-void pisa_prova::init()
+void pisa_prova::loadGraph()
 {
-    ROS_INFO_STREAM("START");
-    
-    pnh.param<int>("robot_number", n, 5);
-    ROS_INFO_STREAM("Robot Number: " << n);
-
-    //********************* LOAD GRAPH **********************//
+     //********************* LOAD GRAPH **********************//
     
     try 
     {
@@ -178,14 +240,15 @@ void pisa_prova::init()
     middleweight = middleweight/702;
     
     ROS_INFO_STREAM("GRAPH LOADED");
-       
+}
+
+void pisa_prova::spawnRobot()
+{
     //********************* SPAWN ROBOTS **********************//
     
     stdr_robot::HandleRobot handler;
     std::srand(std::time(0));
     
-    std::vector<Node> random_start_node;
-
     for(int i=0; i < n; i++)
     {
 	random_start_node.push_back(g.nodeFromId(random_generator(node))); 
@@ -212,6 +275,7 @@ void pisa_prova::init()
 	    msg.initialPose.x = coord_x[random_start_node[i]]; 
 	    msg.initialPose.y = coord_y[random_start_node[i]]; 
 	    msg.initialPose.theta = 0; 
+	    msg.robot_type = 0;
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
 	
@@ -230,8 +294,65 @@ void pisa_prova::init()
     }
     
     ROS_INFO_STREAM("ROBOTS SPAWNED");
+}
 
-    //*********************INITIALIZATION**********************//
+void pisa_prova::spawnPublicRobot()
+{
+    //********************* SPAWN ROBOTS **********************//
+    
+    stdr_robot::HandleRobot handler;
+    std::srand(std::time(0));
+    
+    for(int i=0; i < n; i++)
+    {
+	public_random_start_node.push_back(g.nodeFromId(random_generator(node))); 
+    }
+    
+    if(ros::ok())
+    {
+	stdr_msgs::RobotMsg msg;
+	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/simple_robot.xml";
+		
+	try 
+	{
+	    msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	}
+	catch(stdr_parser::ParserException& ex)
+	{
+	    ROS_ERROR("[STDR_PARSER] %s", ex.what());
+	    exit(1);
+	}
+	
+	for(int i = 0; i < public_random_start_node.size(); i++)
+	{
+	    double random_variable = std::rand()%7 +0.2 -M_PI;
+	    msg.initialPose.x = coord_x[public_random_start_node[i]]; 
+	    msg.initialPose.y = coord_y[public_random_start_node[i]]; 
+	    msg.initialPose.theta = 0; 
+	    msg.robot_type = 1;
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+		ROS_INFO_STREAM("robot "<< n + i << " spawned");
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+		exit(1);
+	    }
+	}
+	ros::spinOnce();
+    }
+    
+    ROS_INFO_STREAM("PUBLIC ROBOTS SPAWNED");
+}
+
+void pisa_prova::initRobot()
+{
+ //*********************INITIALIZATION**********************//
     
     std::string name = "robot";
     
@@ -243,9 +364,34 @@ void pisa_prova::init()
 	tmp.err_lin = 0.0;
 	tmp.state = state_machine_STATE::STOP;
 	tmp.robot_state = 3;
+	tmp.prev_state = 3;
 	tmp.transition = "road_free";
 	tmp.id = i;
+	tmp.public_robot = 0;
 	robots.push_back(tmp);
+	
+	ros::Publisher tmp_pub;
+	tmp_pub = nh.advertise<robot_controller::robot>(tmp.robot_name + "/state", 1); 
+		
+	robot_pubs.push_back(tmp_pub);
+
+// 	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
+// 	controller_pubs.push_back(tmp_pub);
+    }
+    
+    for (int i = n; i < 2*n; i++)
+    {
+	Robot tmp;
+	tmp.robot_name = name + std::to_string(i);
+	tmp.err_ang = 0.0;
+	tmp.err_lin = 0.0;
+	tmp.state = state_machine_STATE::STOP;
+	tmp.robot_state = 3;
+	tmp.prev_state = 3;
+	tmp.transition = "road_free";
+	tmp.id = i;
+	tmp.public_robot = 1;
+	public_robots.push_back(tmp);
 	
 	ros::Publisher tmp_pub;
 	tmp_pub = nh.advertise<robot_controller::robot>(tmp.robot_name + "/state", 1); 
@@ -258,12 +404,11 @@ void pisa_prova::init()
 
     ReadPoses();
     
-    ROS_INFO_STREAM("INITIALIZATION OK");
+    ROS_INFO_STREAM("INITIALIZATION OK");   
+}
 
-    //********************* COMPUTE PATH **********************//
-
-    std::vector<Node> random_goal_node;
-    
+void pisa_prova::computePath()
+{    
     for(int i=0; i < n; i++)
     {
 	random_goal_node.push_back(g.nodeFromId(random_generator(node))); 
@@ -311,7 +456,90 @@ void pisa_prova::init()
     }
     
     ROS_INFO_STREAM("PATH COMPUTED");
+}
+
+void pisa_prova::computePublicPath()
+{    
+    for(int i=0; i < n; i++)
+    {
+	public_random_goal_node.push_back(g.nodeFromId(random_generator(node))); 
+    }
+
+//     for(int i = 0; i < n; i++)
+//     {
+// 	ROS_WARN_STREAM("Initial Node ID robot " << i << ": "<< g.id(public_random_start_node.at(i)) << " ----> Goal Node ID robot " << i << ": " << g.id(random_goal_node.at(i)));
+//     }
+   
+    for (int i = 0; i < public_random_start_node.size(); i++) 
+    {
+	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+	    
+	dijkstra_test.run(public_random_start_node.at(i), public_random_goal_node.at(i));
+	
+// 	std::cout << "PATH Robot" << i << ": ";
+	   
+	if (dijkstra_test.dist(public_random_goal_node.at(i)) > 0)
+	{   
+	    for (Node v = public_random_goal_node.at(i); v != public_random_start_node.at(i); v = dijkstra_test.predNode(v)) 
+	    {
+		geometry_msgs::Pose2D tmp;
+		tmp.y = coord_y[v];
+		tmp.x = coord_x[v];
+		
+		public_robots[i].ref.push_back(tmp);
+		public_robots[i].ref_node.push_back(v);
+		
+// 		std::cout << g.id(v) << " <- ";
+	    }
+// 	    std::cout << g.id(public_random_start_node.at(i))<< std::endl;
+	    std::reverse(public_robots[i].ref.begin(),public_robots[i].ref.end());
+	    std::reverse(public_robots[i].ref_node.begin(),public_robots[i].ref_node.end());
+	}
+	else
+	{
+	    geometry_msgs::Pose2D tmp;
+	    tmp.x = public_robots[i].curr_pose.x;
+	    tmp.y = public_robots[i].curr_pose.y;	    
+	    public_robots[i].ref.push_back(tmp); 
+	}
+
+	public_robots[i].prev_ref_node = public_random_start_node[i];
+    }
+    
+    ROS_INFO_STREAM("PUBLIC PATH COMPUTED");
+}
+
+void pisa_prova::init()
+{
+    ROS_INFO_STREAM("START");
+    
+    pnh.param<int>("robot_number", n, 10);
+    ROS_INFO_STREAM("Robot Number: " << n + n);
+    
+    //********************* LOAD GRAPH **********************//
+    
+    loadGraph();
+       
+    //********************* SPAWN ROBOTS **********************//
+    
+    spawnRobot();
+    
+    //********************* SPAWN PUBLIC ROBOTS **********************//
+
+    spawnPublicRobot();
+
+    //*********************INITIALIZATION**********************//
+    
+    initRobot();
+
+    //********************* COMPUTE PATH **********************//
+
+    computePath();
         
+    //********************* COMPUTE PUBLIC PATH **********************//
+
+    computePublicPath();
+    
     usleep(1000*1000);
 }
 
@@ -328,10 +556,11 @@ void pisa_prova::run()
 	std::vector<std::vector<state_transition>> matrix(n, tmp);	//matrix nxn containing state transition info (i,j) e (j,i) 
 	
 	std::vector<int> robot_num(g.arcNum(),0);
-// 	for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
-// 	{
-// 	    len[a] = init_len[a];
-// 	}
+	
+	for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
+	{
+	    len[a] = init_len[a];
+	}
 		
 	for(int i = 0; i < n; i++)
 	{
@@ -342,7 +571,6 @@ void pisa_prova::run()
 // 		    if(g.id(a) != robots[i].prev_value) 
 // 		    {
 			robot_num.at(g.id(a))++;
-			
 // 			if(robot_num.at(g.id(a)) > 1)
 // 			{
 // 			    ROS_INFO_STREAM("Numero Robot su arco " << g.id(a) << " = " << robot_num.at(g.id(a)));
@@ -360,7 +588,7 @@ void pisa_prova::run()
 	    //Compute linear and angular error for robot i
 	    robots[i].err_ang = atan2(fy,fx) - robots[i].curr_pose.theta;    
 	    robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
-	    	    	    
+
 	    if(robots[i].err_lin < 1 && robots[i].ref.size() > 1)
 	    {
 		robots[i].prev_ref_node = robots[i].ref_node[0]; 
@@ -484,51 +712,22 @@ void pisa_prova::run()
 	    
 	    robot_controller::robot msg1;
 	    
-// 	    msg1.ref_x = robots[i].ref[0].x;
-// 	    msg1.ref_y = robots[i].ref[0].y;
+    // 	    msg1.ref_x = robots[i].ref[0].x;
+    // 	    msg1.ref_y = robots[i].ref[0].y;
 	    msg1.err_lin = robots[i].err_lin;
 	    msg1.err_ang = robots[i].err_ang;
 	    msg1.robot_state = robots[i].robot_state;
 	    msg1.id = robots[i].id;
 	    msg1.n = n;
-
+	    
 	    robot_pubs[robots[i].id].publish(msg1);
 	    
-// 	    ROS_WARN_STREAM("ROBOT: " << robots[i].id << " pos x: " << robots[i].curr_pose.x << " pose y: " << robots[i].curr_pose.y);
-
-
-// 	    if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
-// 	    {
-// 		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
-// 		robots[i].twist.linear.x = 0.0;	
-// 	    }
-// 	    if(robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
-// 	    {
-// 		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
-// 		robots[i].twist.linear.x = 4*robots[i].err_lin; // MULTI CROSS
-// 		if (robots[i].twist.linear.x > 10)
-// 		    robots[i].twist.linear.x = 10;
-// 		if (robots[i].twist.linear.x < 0.5)
-// 		    robots[i].twist.linear.x = 0.5;
-// 	    }
-// 	    if(robots[i].state == state_machine_STATE::MOVE_SLOW)
-// 	    { 
-// 		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
-// 		robots[i].twist.linear.x = 1.5*robots[i].err_lin; // MULTI CROSS
-// 		if (robots[i].twist.linear.x > 7)
-// 		    robots[i].twist.linear.x = 7;
-// 		if (robots[i].twist.linear.x < 0.2)
-// 		    robots[i].twist.linear.x = 0.2;		
-// 	    }
-// 	    if(robots[i].state == state_machine_STATE::STOP)
-// 	    {
-// 		robots[i].twist.angular.z = 2*sin(robots[i].err_ang);
-// 		robots[i].twist.linear.x = 0.0;	
-// 	    }
-// 	    	    
-// 	    controller_pubs[robots[i].id].publish(robots[i].twist);
+// 	    if(robots[i].robot_state != robots[i].prev_state)
+// 	    robots[i].prev_state = robots[i].robot_state;
+	    	    	    
 	    ros::spinOnce();
 	}
+	    
 	ros::spinOnce();
 	loop_rate.sleep();
     }

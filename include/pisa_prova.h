@@ -56,27 +56,35 @@ struct Robot
     std::string transition;
     state_machine_STATE state;
     int robot_state;
+    int prev_state;
     int id;
     int prev_value;
+    bool public_robot;
 };
 
 class pisa_prova
 {
-private:
+public:
     ros::NodeHandle nh;
     ros::NodeHandle pnh;
     
     std::vector<ros::Publisher> controller_pubs;
     std::vector<ros::Publisher> robot_pubs;
     std::vector<Robot> robots;
+    std::vector<Robot> public_robots;
    
     tf::TransformListener listener;
     
     int n;
+    int number;
     int var=0;
     double middleweight;
 
     std::vector<int> node;
+    std::vector<Node> random_start_node;
+    std::vector<Node> random_goal_node;
+    std::vector<Node> public_random_start_node;
+    std::vector<Node> public_random_goal_node;
 
 //     typedef SmartDigraph::NodeMap<int> IdMap;
     
@@ -88,14 +96,22 @@ private:
     SmartDigraph::NodeMap<Point> coords;
 //     IdMap id;
     
-private:
+public:
     void ReadPoses();
+    state_transition getMax(std::vector<state_transition> v);
+    double special_sin(double err_ang); 
     int random_generator(std::vector<int> v);
     double LinearErrX(geometry_msgs::Pose2D current, std::vector<geometry_msgs::Pose2D> reference);
     double LinearErrY(geometry_msgs::Pose2D current,  std::vector<geometry_msgs::Pose2D> reference);
     bool evolve_state_machines(int i);
+    bool evolve_state_machines_public(int i);
+    void loadGraph();
+    void spawnRobot();
+    void spawnPublicRobot();
+    void initRobot();
+    void computePath();
+    void computePublicPath();
     
-public:
     pisa_prova();
     ~pisa_prova();
     void init();
