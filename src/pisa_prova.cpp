@@ -600,7 +600,7 @@ void pisa_prova::run()
 		robots[i].ref_node.erase(robots[i].ref_node.begin()+0); //SWITCH GOAL
 	    }
 	    	    
-	    //Robot i look at all the other public robots j
+	    //Robot i look at all the other public robots k
 	    for(int k = 0; k < public_n; k++) 
 	    {
 		double gamma1 = atan2(public_robots[k].curr_pose.y - robots[i].curr_pose.y, public_robots[k].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
@@ -610,90 +610,96 @@ void pisa_prova::run()
 		
 		double dist1 = sqrt(pow(robots[i].curr_pose.x - public_robots[k].curr_pose.x,2) + pow(robots[i].curr_pose.y - public_robots[k].curr_pose.y,2)); //distance between i and j
 
-		if(angle1 < alpha1) //j is in the vision range of i
+		if(angle1 < alpha1) //k is in the vision range of i
 		{
 		    if(dist1 >= 8 && dist1 < 20)
 		    {
-			matrix.at(i).at(k) = state_transition::near_car;
+			matrix.at(i).at(n + k) = state_transition::near_car;
 		    }
 		    else if(dist1 < 8)
 		    {
-			matrix.at(i).at(k) = state_transition::stop_now;
+			matrix.at(i).at(n + k) = state_transition::stop_now;
 		    }
 		    else
 		    {
 			if(special_sin(robots[i].err_ang) > 0.05)
 			{
-			    matrix.at(i).at(k) = state_transition::rot_only;
+			    matrix.at(i).at(n + k) = state_transition::rot_only;
 			}
 			else 
 			{
-			    matrix.at(i).at(k) = state_transition::move_rot;
+			    matrix.at(i).at(n + k) = state_transition::move_rot;
 			}		    
 		    }
 		}  
 		else
 		{
-		    //Robot i look at all the other robots j
-		    for(int j = 0; j < n; j++)
+		    if(special_sin(robots[i].err_ang) > 0.05)
 		    {
-			if(n==1)
+			matrix.at(i).at(n + k) = state_transition::rot_only;
+		    }
+		    else 
+		    {
+			matrix.at(i).at(n + k) = state_transition::move_rot;
+		    }	
+		}
+	    }
+		    
+	    //Robot i look at all the other robots j
+	    for(int j = 0; j < n; j++)
+	    {
+		if(n==1)
+		{
+		    if(special_sin(robots[i].err_ang) > 0.05)
+		    {
+			matrix.at(i).at(j) = state_transition::rot_only;
+		    }
+		    else 
+		    {
+			matrix.at(i).at(j) = state_transition::move_rot;
+		    }
+		}
+		    
+		if(i != j && n != 1)
+		{
+		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
+		    double theta = robots[i].curr_pose.theta; //current orientation of i
+		    double alpha= M_PI/5; //half vision angle    
+		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
+		    
+		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
+		    
+		    if(special_sin(robots[i].err_ang) > 0.05)
+		    {
+			matrix.at(i).at(j) = state_transition::rot_only;
+		    }		
+		    else if(angle < alpha) //j is in the vision range of i
+		    {
+			if(dist >= 8 && dist < 20)
 			{
-			    if(special_sin(robots[i].err_ang) > 0.05)
-			    {
-				matrix.at(i).at(j) = state_transition::rot_only;
-			    }
-			    else 
-			    {
-				matrix.at(i).at(j) = state_transition::move_rot;
-			    }
+			    matrix.at(i).at(j) = state_transition::near_car;
 			}
-			    
-			if(i != j && n != 1)
+			
+			if(dist < 8)
 			{
-			    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
-			    double theta = robots[i].curr_pose.theta; //current orientation of i
-			    double alpha= M_PI/5; //half vision angle    
-			    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
+			    matrix.at(i).at(j) = state_transition::stop_now;
 			    
-			    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
-			    
-			    if(special_sin(robots[i].err_ang) > 0.05)
-			    {
-				matrix.at(i).at(j) = state_transition::rot_only;
-			    }
-			    else if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
-			    {
-				matrix.at(i).at(j) = state_transition::move_rot;
-			    }
-			    else
-			    {			
-				if(angle < alpha) //j is in the vision range of i
-				{
-				    if(dist >= 8 && dist < 20)
-				    {
-					matrix.at(i).at(j) = state_transition::near_car;
-				    }
-				    
-				    if(dist < 8)
-				    {
-					matrix.at(i).at(j) = state_transition::stop_now;
-					
-					if(robots[i].id > robots[j].id && dist > 2) 
-					    matrix.at(i).at(j) = state_transition::road_free;
-					if(robots[i].id > robots[j].id && dist < 2)
-					    matrix.at(i).at(j) = state_transition::stop_now;
-				    }
-				}   
-			    }
+			    if(robots[i].id > robots[j].id && dist > 2) 
+				matrix.at(i).at(j) = state_transition::road_free;
+			    if(robots[i].id > robots[j].id && dist < 2)
+				matrix.at(i).at(j) = state_transition::stop_now;
 			}
 		    }
+		    else
+		    {
+			matrix.at(i).at(j) = state_transition::move_rot;
+		    }
+			
 		}
 	    }
 	    
 	    if(robots[i].err_lin < 10 && robots[i].ref.size() == 1) //DELETE ROBOT
 	    {
-		ROS_INFO_STREAM("Robot privato " << robots[i].id << " arrivato!");
 		stdr_robot::HandleRobot handler;
 		std::string name("robot" + std::to_string(robots[i].id));
 		try
@@ -827,66 +833,72 @@ void pisa_prova::run()
 		}  
 		else
 		{
-		    //Robot i look at all the other robots j
-		    for(int j = 0; j < public_n; j++)
+			if(special_sin(public_robots[i].err_ang) > 0.05)
+			{
+			    matrix.at(n + i).at(k) = state_transition::rot_only;
+			}
+			else 
+			{
+			    matrix.at(n + i).at(k) = state_transition::move_rot;
+			}
+		}
+	    }
+	    
+	    //Robot i look at all the other robots j
+	    for(int j = 0; j < public_n; j++)
+	    {
+		if(public_n==1)
+		{
+		    if(special_sin(public_robots[i].err_ang) > 0.05)
 		    {
-			if(public_n==1)
-			{
-			    if(special_sin(public_robots[i].err_ang) > 0.05)
-			    {
-				matrix.at(n + i).at(n + j) = state_transition::rot_only;
-			    }
-			    else 
-			    {
-				matrix.at(n + i).at(n + j) = state_transition::move_rot;
-			    }
-			}
-			    
-			if(i != j && public_n != 1)
-			{
-			    double gamma = atan2(public_robots[j].curr_pose.y - public_robots[i].curr_pose.y, public_robots[j].curr_pose.x - public_robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
-			    double theta = public_robots[i].curr_pose.theta; //current orientation of i
-			    double alpha= M_PI/5; //half vision angle    
-			    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
-			    
-			    double dist = sqrt(pow(public_robots[i].curr_pose.x - public_robots[j].curr_pose.x,2) + pow(public_robots[i].curr_pose.y - public_robots[j].curr_pose.y,2)); //distance between i and j
-			    
-			    if(special_sin(public_robots[i].err_ang) > 0.05)
-			    {
-				matrix.at(n + i).at(n + j) = state_transition::rot_only;
-			    }
-			    else if(public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
-			    {
-				matrix.at(n + i).at(n + j) = state_transition::move_rot;
-			    }
-			    else
-			    {			
-				if(angle < alpha) //j is in the vision range of i
-				{
-				    if(dist >= 8 && dist < 20)
-				    {
-					matrix.at(n + i).at(n + j) = state_transition::near_car;
-				    }
-				    
-				    if(dist < 8)
-				    {
-					matrix.at(n + i).at(n + j) = state_transition::stop_now;
-					
-					if(public_robots[i].id > public_robots[j].id && dist > 2) 
-					    matrix.at(n + i).at(n + j) = state_transition::road_free;
-					if(public_robots[i].id > public_robots[j].id && dist < 2)
-					    matrix.at(n + i).at(n + j) = state_transition::stop_now;
-				    }
-				}   
-			    }
-			}
+			matrix.at(n + i).at(n + j) = state_transition::rot_only;
+		    }
+		    else 
+		    {
+			matrix.at(n + i).at(n + j) = state_transition::move_rot;
 		    }
 		}
+		    
+		if(i != j && public_n != 1)
+		{
+		    double gamma = atan2(public_robots[j].curr_pose.y - public_robots[i].curr_pose.y, public_robots[j].curr_pose.x - public_robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
+		    double theta = public_robots[i].curr_pose.theta; //current orientation of i
+		    double alpha= M_PI/5; //half vision angle    
+		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
+		    
+		    double dist = sqrt(pow(public_robots[i].curr_pose.x - public_robots[j].curr_pose.x,2) + pow(public_robots[i].curr_pose.y - public_robots[j].curr_pose.y,2)); //distance between i and j
+		    
+		    if(special_sin(public_robots[i].err_ang) > 0.05)
+		    {
+			matrix.at(n + i).at(n + j) = state_transition::rot_only;
+		    }
+		    else if(angle < alpha) //j is in the vision range of i
+		    {
+			if(dist >= 8 && dist < 20)
+			{
+			    matrix.at(n + i).at(n + j) = state_transition::near_car;
+			}
+			
+			if(dist < 8)
+			{
+			    matrix.at(n + i).at(n + j) = state_transition::stop_now;
+			    
+			    if(public_robots[i].id > public_robots[j].id && dist > 2) 
+				matrix.at(n + i).at(n + j) = state_transition::road_free;
+			    if(public_robots[i].id > public_robots[j].id && dist < 2)
+				matrix.at(n + i).at(n + j) = state_transition::stop_now;
+			}
+		    }
+		    else 
+		    {
+			matrix.at(n + i).at(n + j) = state_transition::move_rot;
+		    }
+	
+		  }
 	    }
 	    
 	    if(public_robots[i].err_lin < 10 && public_robots[i].ref.size() == 1) //DELETE ROBOT
 	    {
-		ROS_INFO_STREAM("Robot pubblico " << public_robots[i].id << " arrivato!");
 		stdr_robot::HandleRobot handler;
 		std::string name("robot" + std::to_string(public_robots[i].id));
 		try
