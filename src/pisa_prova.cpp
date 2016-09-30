@@ -34,7 +34,7 @@ void pisa_prova::ReadPoses() //Read from tf the robots position
 	}
     }
     
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < public_n; i++)
     {
 	tf::StampedTransform transform;
 	try{
@@ -303,7 +303,7 @@ void pisa_prova::spawnPublicRobot()
     stdr_robot::HandleRobot handler;
     std::srand(std::time(0));
     
-    for(int i=0; i < n; i++)
+    for(int i=0; i < public_n; i++)
     {
 	public_random_start_node.push_back(g.nodeFromId(random_generator(node))); 
     }
@@ -336,7 +336,7 @@ void pisa_prova::spawnPublicRobot()
 	    try 
 	    {
 		namedRobot = handler.spawnNewRobot(msg);
-		ROS_INFO_STREAM("robot "<< n + i << " spawned");
+		ROS_INFO_STREAM("robot "<< public_n + i << " spawned");
 	    }
 	    catch (stdr_robot::ConnectionException& ex) 
 	    {
@@ -379,7 +379,7 @@ void pisa_prova::initRobot()
 // 	controller_pubs.push_back(tmp_pub);
     }
     
-    for (int i = n; i < 2*n; i++)
+    for (int i = n; i < n + public_n; i++)
     {
 	Robot tmp;
 	tmp.robot_name = name + std::to_string(i);
@@ -446,6 +446,7 @@ void pisa_prova::computePath()
 	}
 	else
 	{
+	    ROS_INFO_STREAM("ERROR PATH");
 	    geometry_msgs::Pose2D tmp;
 	    tmp.x = robots[i].curr_pose.x;
 	    tmp.y = robots[i].curr_pose.y;	    
@@ -460,12 +461,12 @@ void pisa_prova::computePath()
 
 void pisa_prova::computePublicPath()
 {    
-    for(int i=0; i < n; i++)
+    for(int i=0; i < public_n; i++)
     {
 	public_random_goal_node.push_back(g.nodeFromId(random_generator(node))); 
     }
 
-//     for(int i = 0; i < n; i++)
+//     for(int i = 0; i < public_n; i++)
 //     {
 // 	ROS_WARN_STREAM("Initial Node ID robot " << i << ": "<< g.id(public_random_start_node.at(i)) << " ----> Goal Node ID robot " << i << ": " << g.id(random_goal_node.at(i)));
 //     }
@@ -513,8 +514,9 @@ void pisa_prova::init()
 {
     ROS_INFO_STREAM("START");
     
-    pnh.param<int>("robot_number", n, 10);
-    ROS_INFO_STREAM("Robot Number: " << n + n);
+    pnh.param<int>("robot_number", n, 3);
+    public_n = n;
+    ROS_INFO_STREAM("Robot Number: " << n + public_n);
     
     //********************* LOAD GRAPH **********************//
     
@@ -552,8 +554,8 @@ void pisa_prova::run()
     {
 	ReadPoses();
 	
-	std::vector<state_transition> tmp(n, state_transition::road_free);
-	std::vector<std::vector<state_transition>> matrix(n, tmp);	//matrix nxn containing state transition info (i,j) e (j,i) 
+	std::vector<state_transition> tmp(n + public_n, state_transition::road_free);
+	std::vector<std::vector<state_transition>> matrix(n + public_n, tmp);	//matrix nxn containing state transition info (i,j) e (j,i) 
 	
 	std::vector<int> robot_num(g.arcNum(),0);
 	
@@ -562,8 +564,10 @@ void pisa_prova::run()
 	    len[a] = init_len[a];
 	}
 		
+	 // PRIVATE ROBOT CONTROLLER   		
 	for(int i = 0; i < n; i++)
 	{
+	    // TRAFFIC CHECK
 	    for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
 	    {
 		if(robots[i].ref_node[0] == g.target(a) && robots[i].prev_ref_node == g.source(a))
@@ -576,7 +580,7 @@ void pisa_prova::run()
 // 			    ROS_INFO_STREAM("Numero Robot su arco " << g.id(a) << " = " << robot_num.at(g.id(a)));
 // 			    ROS_INFO_STREAM("Robot " << robots[i].id << " su arco " << g.id(a));
 // 			}
-			robots[i].prev_value = g.id(a);
+// 			robots[i].prev_value = g.id(a);
 			len[a]+= middleweight;
 // 		    }
 		}
@@ -595,64 +599,101 @@ void pisa_prova::run()
 		robots[i].ref.erase(robots[i].ref.begin()+0); //SWITCH GOAL
 		robots[i].ref_node.erase(robots[i].ref_node.begin()+0); //SWITCH GOAL
 	    }
-	    
-	    //Robot i look at all the other robots j
-	    for(int j = 0; j < n; j++)
+	    	    
+	    //Robot i look at all the other public robots j
+	    for(int k = 0; k < public_n; k++) 
 	    {
-		if(n==1)
+		double gamma1 = atan2(public_robots[k].curr_pose.y - robots[i].curr_pose.y, public_robots[k].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
+		double theta1 = robots[i].curr_pose.theta; //current orientation of i
+		double alpha1= M_PI/5; //half vision angle    
+		double angle1 = fabs(fmod(theta1 - gamma1, 2*M_PI)); 
+		
+		double dist1 = sqrt(pow(robots[i].curr_pose.x - public_robots[k].curr_pose.x,2) + pow(robots[i].curr_pose.y - public_robots[k].curr_pose.y,2)); //distance between i and j
+
+		if(angle1 < alpha1) //j is in the vision range of i
 		{
-		    if(special_sin(robots[i].err_ang) > 0.05)
+		    if(dist1 >= 8 && dist1 < 20)
 		    {
-			matrix.at(i).at(j) = state_transition::rot_only;
+			matrix.at(i).at(k) = state_transition::near_car;
 		    }
-		    else 
+		    else if(dist1 < 8)
 		    {
-			matrix.at(i).at(j) = state_transition::move_rot;
-		    }
-		}
-		    
-		if(i != j && n != 1)
-		{
-		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
-		    double theta = robots[i].curr_pose.theta; //current orientation of i
-		    double alpha= M_PI/5; //half vision angle    
-		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
-		    
-		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
-		    
-		    if(special_sin(robots[i].err_ang) > 0.05)
-		    {
-			matrix.at(i).at(j) = state_transition::rot_only;
-		    }
-		    else if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
-		    {
-			matrix.at(i).at(j) = state_transition::move_rot;
+			matrix.at(i).at(k) = state_transition::stop_now;
 		    }
 		    else
-		    {			
-			if(angle < alpha) //j is in the vision range of i
+		    {
+			if(special_sin(robots[i].err_ang) > 0.05)
 			{
-			    if(dist >= 8 && dist < 20)
+			    matrix.at(i).at(k) = state_transition::rot_only;
+			}
+			else 
+			{
+			    matrix.at(i).at(k) = state_transition::move_rot;
+			}		    
+		    }
+		}  
+		else
+		{
+		    //Robot i look at all the other robots j
+		    for(int j = 0; j < n; j++)
+		    {
+			if(n==1)
+			{
+			    if(special_sin(robots[i].err_ang) > 0.05)
 			    {
-				matrix.at(i).at(j) = state_transition::near_car;
+				matrix.at(i).at(j) = state_transition::rot_only;
 			    }
+			    else 
+			    {
+				matrix.at(i).at(j) = state_transition::move_rot;
+			    }
+			}
 			    
-			    if(dist < 8)
+			if(i != j && n != 1)
+			{
+			    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
+			    double theta = robots[i].curr_pose.theta; //current orientation of i
+			    double alpha= M_PI/5; //half vision angle    
+			    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
+			    
+			    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
+			    
+			    if(special_sin(robots[i].err_ang) > 0.05)
 			    {
-				matrix.at(i).at(j) = state_transition::stop_now;
-				
-				if(robots[i].id > robots[j].id && dist > 2) 
-				    matrix.at(i).at(j) = state_transition::road_free;
-				if(robots[i].id > robots[j].id && dist < 2)
-				    matrix.at(i).at(j) = state_transition::stop_now;
+				matrix.at(i).at(j) = state_transition::rot_only;
 			    }
-			}   
+			    else if(robots[i].state == state_machine_STATE::ROTATE_ONLY)
+			    {
+				matrix.at(i).at(j) = state_transition::move_rot;
+			    }
+			    else
+			    {			
+				if(angle < alpha) //j is in the vision range of i
+				{
+				    if(dist >= 8 && dist < 20)
+				    {
+					matrix.at(i).at(j) = state_transition::near_car;
+				    }
+				    
+				    if(dist < 8)
+				    {
+					matrix.at(i).at(j) = state_transition::stop_now;
+					
+					if(robots[i].id > robots[j].id && dist > 2) 
+					    matrix.at(i).at(j) = state_transition::road_free;
+					if(robots[i].id > robots[j].id && dist < 2)
+					    matrix.at(i).at(j) = state_transition::stop_now;
+				    }
+				}   
+			    }
+			}
 		    }
 		}
 	    }
 	    
 	    if(robots[i].err_lin < 10 && robots[i].ref.size() == 1) //DELETE ROBOT
 	    {
+		ROS_INFO_STREAM("Robot privato " << robots[i].id << " arrivato!");
 		stdr_robot::HandleRobot handler;
 		std::string name("robot" + std::to_string(robots[i].id));
 		try
@@ -675,6 +716,7 @@ void pisa_prova::run()
 	    }
 	}
 		
+	// PRIVATE GET MAX  			
 	for(int i = 0; i < n; i++)
 	{
 	    switch(getMax(matrix.at(i)))
@@ -688,6 +730,7 @@ void pisa_prova::run()
 	    }
 	}
 	
+	// PRIVATE STATE MACHINE			
 	for(int i = 0; i < n; i++)	
 	{
 	    if(evolve_state_machines(i))
@@ -709,23 +752,239 @@ void pisa_prova::run()
 		    default: ROS_WARN_STREAM("FAIL"); break;
 		}
 	    }
+	}
 	    
+// 	std::vector<state_transition> tmp1(public_n, state_transition::road_free);
+// 	std::vector<std::vector<state_transition>> public_matrix(public_n, tmp1);	//matrix nxn containing state transition info (i,j) e (j,i) 
+// 	
+	 // PUBLIC ROBOT CONTROLLER   
+	for(int i = 0; i < public_n; i++)    
+	{
+	    // TRAFFIC CHECK
+	    for (SmartDigraph::ArcIt a(g); a != INVALID; ++a) 
+	    {
+		if(public_robots[i].ref_node[0] == g.target(a) && public_robots[i].prev_ref_node == g.source(a))
+		{
+// 		    if(g.id(a) != robots[i].prev_value) 
+// 		    {
+			robot_num.at(g.id(a))++;
+// 			if(robot_num.at(g.id(a)) > 1)
+// 			{
+// 			    ROS_INFO_STREAM("Numero Robot su arco " << g.id(a) << " = " << robot_num.at(g.id(a)));
+// 			    ROS_INFO_STREAM("Robot " << robots[i].id << " su arco " << g.id(a));
+// 			}
+// 			robots[i].prev_value = g.id(a);
+			len[a]+= middleweight;
+// 		    }
+		}
+	    }
+// 	    
+	    double fx = LinearErrX(public_robots[i].curr_pose, public_robots[i].ref);
+	    double fy = LinearErrY(public_robots[i].curr_pose, public_robots[i].ref);
+	    
+	    //Compute linear and angular error for robot i
+	    public_robots[i].err_ang = atan2(fy,fx) - public_robots[i].curr_pose.theta;    
+	    public_robots[i].err_lin = sqrt(pow(fx,2) + pow(fy,2));
+
+	    if(public_robots[i].err_lin < 1 && public_robots[i].ref.size() > 1)
+	    {
+		public_robots[i].prev_ref_node = public_robots[i].ref_node[0]; 
+		public_robots[i].ref.erase(public_robots[i].ref.begin()+0); //SWITCH GOAL
+		public_robots[i].ref_node.erase(public_robots[i].ref_node.begin()+0); //SWITCH GOAL
+	    }
+	    
+	    for(int k = 0; k < n; k++) 
+	    {
+		double gamma1 = atan2(robots[k].curr_pose.y - public_robots[i].curr_pose.y, robots[k].curr_pose.x - public_robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
+		double theta1 = public_robots[i].curr_pose.theta; //current orientation of i
+		double alpha1= M_PI/5; //half vision angle    
+		double angle1 = fabs(fmod(theta1 - gamma1, 2*M_PI)); 
+		
+		double dist1 = sqrt(pow(public_robots[i].curr_pose.x - robots[k].curr_pose.x,2) + pow(public_robots[i].curr_pose.y - robots[k].curr_pose.y,2)); //distance between i and j
+
+		if(angle1 < alpha1) //k is in the vision range of i
+		{
+		    if(dist1 >= 2 && dist1 < 20)
+		    {
+			matrix.at(n + i).at(k) = state_transition::near_car;
+		    }
+		    
+		    else if(dist1 < 2)
+		    {
+			matrix.at(n + i).at(k) = state_transition::stop_now;
+		    }
+		    else
+		    {
+			if(special_sin(public_robots[i].err_ang) > 0.05)
+			{
+			    matrix.at(n + i).at(k) = state_transition::rot_only;
+			}
+			else 
+			{
+			    matrix.at(n + i).at(k) = state_transition::move_rot;
+			}	
+		    }
+		}  
+		else
+		{
+		    //Robot i look at all the other robots j
+		    for(int j = 0; j < public_n; j++)
+		    {
+			if(public_n==1)
+			{
+			    if(special_sin(public_robots[i].err_ang) > 0.05)
+			    {
+				matrix.at(n + i).at(n + j) = state_transition::rot_only;
+			    }
+			    else 
+			    {
+				matrix.at(n + i).at(n + j) = state_transition::move_rot;
+			    }
+			}
+			    
+			if(i != j && public_n != 1)
+			{
+			    double gamma = atan2(public_robots[j].curr_pose.y - public_robots[i].curr_pose.y, public_robots[j].curr_pose.x - public_robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
+			    double theta = public_robots[i].curr_pose.theta; //current orientation of i
+			    double alpha= M_PI/5; //half vision angle    
+			    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
+			    
+			    double dist = sqrt(pow(public_robots[i].curr_pose.x - public_robots[j].curr_pose.x,2) + pow(public_robots[i].curr_pose.y - public_robots[j].curr_pose.y,2)); //distance between i and j
+			    
+			    if(special_sin(public_robots[i].err_ang) > 0.05)
+			    {
+				matrix.at(n + i).at(n + j) = state_transition::rot_only;
+			    }
+			    else if(public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
+			    {
+				matrix.at(n + i).at(n + j) = state_transition::move_rot;
+			    }
+			    else
+			    {			
+				if(angle < alpha) //j is in the vision range of i
+				{
+				    if(dist >= 8 && dist < 20)
+				    {
+					matrix.at(n + i).at(n + j) = state_transition::near_car;
+				    }
+				    
+				    if(dist < 8)
+				    {
+					matrix.at(n + i).at(n + j) = state_transition::stop_now;
+					
+					if(public_robots[i].id > public_robots[j].id && dist > 2) 
+					    matrix.at(n + i).at(n + j) = state_transition::road_free;
+					if(public_robots[i].id > public_robots[j].id && dist < 2)
+					    matrix.at(n + i).at(n + j) = state_transition::stop_now;
+				    }
+				}   
+			    }
+			}
+		    }
+		}
+	    }
+	    
+	    if(public_robots[i].err_lin < 10 && public_robots[i].ref.size() == 1) //DELETE ROBOT
+	    {
+		ROS_INFO_STREAM("Robot pubblico " << public_robots[i].id << " arrivato!");
+		stdr_robot::HandleRobot handler;
+		std::string name("robot" + std::to_string(public_robots[i].id));
+		try
+		{    
+		    if (handler.deleteRobot(name))
+		    {
+			ROS_INFO("Robot %s deleted successfully", name.c_str());
+		    }
+		    else 
+		    {
+			ROS_ERROR("Could not delete robot %s", name.c_str());
+		    }
+		}
+		catch (stdr_robot::ConnectionException& ex) 
+		{
+		    ROS_ERROR("%s", ex.what());
+		}
+		public_robots.erase(public_robots.begin() + i);
+		public_n--;
+	    }
+	}
+	
+	// PUBLIC GET MAX  			
+	for(int i = 0; i < public_n; i++)
+	{
+	    switch(getMax(matrix.at(n + i)))
+	    {
+		case state_transition::road_free: public_robots[i].transition = "road_free"; break;
+		case state_transition::rot_only: public_robots[i].transition = "rot_only";  break;
+		case state_transition::near_car: public_robots[i].transition = "near_car"; break;
+		case state_transition::stop_now: public_robots[i].transition = "stop_now"; break;
+		case state_transition::move_rot: public_robots[i].transition = "move_rot"; break;
+		default: abort();
+	    }
+	}
+	
+	// PUBLIC STATE MACHINE			
+	for(int i = 0; i < public_n; i++)	
+	{
+	    if(evolve_state_machines_public(i))
+	    {
+		switch(public_robots[i].state)
+		{
+		    case state_machine_STATE::ROTATE_ONLY: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": ROTATE_ONLY")*/;
+			public_robots[i].robot_state = 0;
+			break;
+		    case state_machine_STATE::MOVE_AND_ROTATE: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_AND_ROTATE")*/;
+			public_robots[i].robot_state = 1;
+			break;
+		    case state_machine_STATE::MOVE_SLOW: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": MOVE_SLOW")*/; 
+			public_robots[i].robot_state = 2;
+			break;
+		    case state_machine_STATE::STOP: /*ROS_WARN_STREAM("Robot " << std::to_string(i) << ": STOP")*/; 
+			public_robots[i].robot_state = 3;
+			break;
+		    default: ROS_WARN_STREAM("FAIL"); break;
+		}
+	    }
+	}
+	    
+	//PRIVATE PUBLISHER
+	for(int i = 0; i < n ; i++)	
+	{	    
 	    robot_controller::robot msg1;
-	    
-    // 	    msg1.ref_x = robots[i].ref[0].x;
-    // 	    msg1.ref_y = robots[i].ref[0].y;
+// 	   	msg1.ref_x = robots[i].ref[0].x;
+// 	    	msg1.ref_y = robots[i].ref[0].y;
 	    msg1.err_lin = robots[i].err_lin;
 	    msg1.err_ang = robots[i].err_ang;
 	    msg1.robot_state = robots[i].robot_state;
 	    msg1.id = robots[i].id;
-	    msg1.n = n;
+	    msg1.n = n + public_n;
 	    
 	    robot_pubs[robots[i].id].publish(msg1);
 	    
 // 	    if(robots[i].robot_state != robots[i].prev_state)
 // 	    robots[i].prev_state = robots[i].robot_state;
 	    	    	    
-	    ros::spinOnce();
+	    ros::spinOnce();   
+	}
+	
+	//PUBLIC PUBLISHER
+	for(int i = 0; i < public_n ; i++)	
+	{	    
+	    robot_controller::robot msg1;
+// 	   	msg1.ref_x = robots[i].ref[0].x;
+// 	    	msg1.ref_y = robots[i].ref[0].y;
+	    msg1.err_lin = public_robots[i].err_lin;
+	    msg1.err_ang = public_robots[i].err_ang;
+	    msg1.robot_state = public_robots[i].robot_state;
+	    msg1.id = public_robots[i].id;
+	    msg1.n = n + public_n;
+	    
+	    robot_pubs[public_robots[i].id].publish(msg1);
+	    
+// 	    if(robots[i].robot_state != robots[i].prev_state)
+// 	    robots[i].prev_state = robots[i].robot_state;
+	    	    	    
+	    ros::spinOnce();   
 	}
 	    
 	ros::spinOnce();

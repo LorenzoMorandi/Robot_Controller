@@ -76,6 +76,7 @@ public:
     tf::TransformListener listener;
     
     int n;
+    int public_n;
     int number;
     int var=0;
     double middleweight;
