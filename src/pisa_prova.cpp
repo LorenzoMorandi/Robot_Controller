@@ -85,7 +85,7 @@ state_transition pisa_prova::getMax(std::vector<state_transition> v) //Assign va
 
 double pisa_prova::special_sin(double err_ang) 
 {
-    if(err_ang >= M_PI/2 && err_ang <= 3*M_PI/2 || err_ang <= -M_PI/2 && err_ang >= -3*M_PI/2)
+    if((err_ang >= M_PI/2 && err_ang <= 3*M_PI/2) || (err_ang <= -M_PI/2 && err_ang >= -3*M_PI/2))
     {
 	return 1.0;
     }
@@ -97,14 +97,34 @@ double pisa_prova::special_sin(double err_ang)
 
 bool pisa_prova::evolve_state_machines(int i)	//State Machine evolution
 {
-    if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    if(robots[i].transition == "move_rot" && robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(robots[i].transition == "road_free" && robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::ROTATE_ONLY)
     {
 	robots[i].state = state_machine_STATE::STOP;
 	return true;
     }
-    if(robots[i].transition == "move_rot" && robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    if(robots[i].transition == "near_car" && robots[i].state == state_machine_STATE::ROTATE_ONLY)
     {
-	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	robots[i].state = state_machine_STATE::STOP;
 	return true;
     }
     if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
@@ -117,6 +137,16 @@ bool pisa_prova::evolve_state_machines(int i)	//State Machine evolution
 	robots[i].state = state_machine_STATE::MOVE_SLOW;
 	return true;
     }
+    if(robots[i].transition == "road_free" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(robots[i].transition == "move_rot" && robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
     if(robots[i].transition == "road_free" && robots[i].state == state_machine_STATE::MOVE_SLOW)
     {
 	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
@@ -127,14 +157,24 @@ bool pisa_prova::evolve_state_machines(int i)	//State Machine evolution
 	robots[i].state = state_machine_STATE::STOP;
 	return true;
     }
-    if(robots[i].transition == "road_free" && robots[i].state == state_machine_STATE::STOP)
+    if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(robots[i].transition == "near_car" && robots[i].state == state_machine_STATE::MOVE_SLOW)
     {
 	robots[i].state = state_machine_STATE::MOVE_SLOW;
 	return true;
     }
-    if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::MOVE_SLOW)
+    if(robots[i].transition == "move_rot" && robots[i].state == state_machine_STATE::MOVE_SLOW)
     {
-	robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(robots[i].transition == "road_free" && robots[i].state == state_machine_STATE::STOP)
+    {
+	robots[i].state = state_machine_STATE::MOVE_SLOW;
 	return true;
     }
     if(robots[i].transition == "rot_only" && robots[i].state == state_machine_STATE::STOP)
@@ -142,19 +182,54 @@ bool pisa_prova::evolve_state_machines(int i)	//State Machine evolution
 	robots[i].state = state_machine_STATE::ROTATE_ONLY;
 	return true;
     }
+    if(robots[i].transition == "near_car" && robots[i].state == state_machine_STATE::STOP)
+    {
+	robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(robots[i].transition == "stop_now" && robots[i].state == state_machine_STATE::STOP)
+    {
+	robots[i].state = state_machine_STATE::STOP;
+	return true;
+    }
+    if(robots[i].transition == "move_rot" && robots[i].state == state_machine_STATE::STOP)
+    {
+	robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
     return false;
 }
 
 bool pisa_prova::evolve_state_machines_public(int i)	//State Machine evolution
 {
-    if(public_robots[i].transition == "stop_now" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    if(public_robots[i].transition == "move_rot" && public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(public_robots[i].transition == "rot_only" && public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	public_robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(public_robots[i].transition == "road_free" && public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(public_robots[i].transition == "stop_now" && public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
     {
 	public_robots[i].state = state_machine_STATE::STOP;
 	return true;
     }
-    if(public_robots[i].transition == "move_rot" && public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
+    if(public_robots[i].transition == "near_car" && public_robots[i].state == state_machine_STATE::ROTATE_ONLY)
     {
-	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(public_robots[i].transition == "stop_now" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	public_robots[i].state = state_machine_STATE::STOP;
 	return true;
     }
     if(public_robots[i].transition == "rot_only" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
@@ -167,6 +242,16 @@ bool pisa_prova::evolve_state_machines_public(int i)	//State Machine evolution
 	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
 	return true;
     }
+    if(public_robots[i].transition == "road_free" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(public_robots[i].transition == "move_rot" && public_robots[i].state == state_machine_STATE::MOVE_AND_ROTATE)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
     if(public_robots[i].transition == "road_free" && public_robots[i].state == state_machine_STATE::MOVE_SLOW)
     {
 	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
@@ -177,19 +262,44 @@ bool pisa_prova::evolve_state_machines_public(int i)	//State Machine evolution
 	public_robots[i].state = state_machine_STATE::STOP;
 	return true;
     }
-    if(public_robots[i].transition == "road_free" && public_robots[i].state == state_machine_STATE::STOP)
-    {
-	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
-	return true;
-    }
     if(public_robots[i].transition == "rot_only" && public_robots[i].state == state_machine_STATE::MOVE_SLOW)
     {
 	public_robots[i].state = state_machine_STATE::ROTATE_ONLY;
 	return true;
     }
+    if(public_robots[i].transition == "near_car" && public_robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(public_robots[i].transition == "move_rot" && public_robots[i].state == state_machine_STATE::MOVE_SLOW)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
+	return true;
+    }
+    if(public_robots[i].transition == "road_free" && public_robots[i].state == state_machine_STATE::STOP)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
     if(public_robots[i].transition == "rot_only" && public_robots[i].state == state_machine_STATE::STOP)
     {
 	public_robots[i].state = state_machine_STATE::ROTATE_ONLY;
+	return true;
+    }
+    if(public_robots[i].transition == "near_car" && public_robots[i].state == state_machine_STATE::STOP)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_SLOW;
+	return true;
+    }
+    if(public_robots[i].transition == "stop_now" && public_robots[i].state == state_machine_STATE::STOP)
+    {
+	public_robots[i].state = state_machine_STATE::STOP;
+	return true;
+    }
+    if(public_robots[i].transition == "move_rot" && public_robots[i].state == state_machine_STATE::STOP)
+    {
+	public_robots[i].state = state_machine_STATE::MOVE_AND_ROTATE;
 	return true;
     }
     return false;
@@ -605,20 +715,21 @@ void pisa_prova::run()
 	    {
 		double gamma1 = atan2(public_robots[k].curr_pose.y - robots[i].curr_pose.y, public_robots[k].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		double theta1 = robots[i].curr_pose.theta; //current orientation of i
-		double alpha1= M_PI/5; //half vision angle    
+		double alpha1= M_PI/6; //half vision angle    
 		double angle1 = fabs(fmod(theta1 - gamma1, 2*M_PI)); 
 		
 		double dist1 = sqrt(pow(robots[i].curr_pose.x - public_robots[k].curr_pose.x,2) + pow(robots[i].curr_pose.y - public_robots[k].curr_pose.y,2)); //distance between i and j
 
 		if(angle1 < alpha1) //k is in the vision range of i
 		{
-		    if(dist1 >= 8 && dist1 < 20)
+		    if(dist1 >= 8 && dist1 < 15)
 		    {
 			matrix.at(i).at(n + k) = state_transition::near_car;
 		    }
 		    else if(dist1 < 8)
 		    {
 			matrix.at(i).at(n + k) = state_transition::stop_now;
+			ROS_INFO_STREAM("robot"<< robots[i].id << "STOP " << __LINE__);
 		    }
 		    else
 		    {
@@ -664,35 +775,59 @@ void pisa_prova::run()
 		{
 		    double gamma = atan2(robots[j].curr_pose.y - robots[i].curr_pose.y, robots[j].curr_pose.x - robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		    double theta = robots[i].curr_pose.theta; //current orientation of i
-		    double alpha= M_PI/5; //half vision angle    
+		    double alpha= M_PI/6; //half vision angle    
 		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
 		    double dist = sqrt(pow(robots[i].curr_pose.x - robots[j].curr_pose.x,2) + pow(robots[i].curr_pose.y - robots[j].curr_pose.y,2)); //distance between i and j
 		    
-		    if(special_sin(robots[i].err_ang) > 0.05)
+		    if(angle < alpha) //j is in the vision range of i
 		    {
-			matrix.at(i).at(j) = state_transition::rot_only;
-		    }		
-		    else if(angle < alpha) //j is in the vision range of i
-		    {
-			if(dist >= 8 && dist < 20)
+			if(dist >= 8 && dist < 15)
 			{
-			    matrix.at(i).at(j) = state_transition::near_car;
+			    if(robots[i].ref_node[0] == robots[j].ref_node[0] &&
+			    fabs(robots[i].curr_pose.theta - robots[j].curr_pose.theta) < 0.523)
+				matrix.at(i).at(j) = state_transition::near_car;
+			    else
+				matrix.at(i).at(j) = state_transition::road_free;
 			}
 			
-			if(dist < 8)
+			else if(dist < 8)
 			{
 			    matrix.at(i).at(j) = state_transition::stop_now;
+			    ROS_INFO_STREAM("robot"<< robots[i].id << "STOP " << __LINE__);
 			    
-			    if(robots[i].id > robots[j].id && dist > 2) 
+			    if(robots[i].id > robots[j].id) 
 				matrix.at(i).at(j) = state_transition::road_free;
-			    if(robots[i].id > robots[j].id && dist < 2)
+			    if(robots[i].id > robots[j].id && robots[i].ref_node[0] == robots[j].ref_node[0] && 
+				fabs(robots[i].curr_pose.theta - robots[j].curr_pose.theta) < 0.523)
+			    {
 				matrix.at(i).at(j) = state_transition::stop_now;
+				ROS_INFO_STREAM("robot"<< robots[i].id << "STOP " << __LINE__);
+			    }
+
+			}
+			else
+			{
+			    if(special_sin(robots[i].err_ang) > 0.05)
+			    {
+				matrix.at(i).at(j) = state_transition::rot_only;
+			    }	
+			    else
+			    {
+				matrix.at(i).at(j) = state_transition::move_rot;
+			    }
 			}
 		    }
 		    else
 		    {
-			matrix.at(i).at(j) = state_transition::move_rot;
+			if(special_sin(robots[i].err_ang) > 0.05)
+			{
+			    matrix.at(i).at(j) = state_transition::rot_only;
+			}	
+			else
+			{
+			    matrix.at(i).at(j) = state_transition::move_rot;
+			}
 		    }
 			
 		}
@@ -803,21 +938,32 @@ void pisa_prova::run()
 	    {
 		double gamma1 = atan2(robots[k].curr_pose.y - public_robots[i].curr_pose.y, robots[k].curr_pose.x - public_robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		double theta1 = public_robots[i].curr_pose.theta; //current orientation of i
-		double alpha1= M_PI/5; //half vision angle    
+		double alpha1= M_PI/6; //half vision angle    
 		double angle1 = fabs(fmod(theta1 - gamma1, 2*M_PI)); 
 		
 		double dist1 = sqrt(pow(public_robots[i].curr_pose.x - robots[k].curr_pose.x,2) + pow(public_robots[i].curr_pose.y - robots[k].curr_pose.y,2)); //distance between i and j
 
 		if(angle1 < alpha1) //k is in the vision range of i
 		{
-		    if(dist1 >= 2 && dist1 < 20)
+		    if(dist1 >= 6 && dist1 < 15)
 		    {
-			matrix.at(n + i).at(k) = state_transition::near_car;
+			if(robots[k].ref_node[0] == public_robots[i].ref_node[0] &&
+			    fabs(public_robots[i].curr_pose.theta - robots[k].curr_pose.theta) < 0.523)
+			    matrix.at(n + i).at(k) = state_transition::near_car;
+			else
+			    matrix.at(n + i).at(k) = state_transition::road_free;
 		    }
 		    
-		    else if(dist1 < 2)
+		    else if(dist1 < 6)
 		    {
-			matrix.at(n + i).at(k) = state_transition::stop_now;
+			matrix.at(n + i).at(k) = state_transition::road_free;
+			
+			if(robots[k].ref_node[0] == public_robots[i].ref_node[0] &&
+			    fabs(public_robots[i].curr_pose.theta - robots[k].curr_pose.theta) < 0.523)
+			{
+			    matrix.at(n + i).at(k) = state_transition::stop_now;
+			    ROS_INFO_STREAM("robot"<< public_robots[i].id << "STOP " << __LINE__);
+			}
 		    }
 		    else
 		    {
@@ -847,7 +993,7 @@ void pisa_prova::run()
 	    //Robot i look at all the other robots j
 	    for(int j = 0; j < public_n; j++)
 	    {
-		if(public_n==1)
+		if(public_n == 1)
 		{
 		    if(special_sin(public_robots[i].err_ang) > 0.05)
 		    {
@@ -863,35 +1009,58 @@ void pisa_prova::run()
 		{
 		    double gamma = atan2(public_robots[j].curr_pose.y - public_robots[i].curr_pose.y, public_robots[j].curr_pose.x - public_robots[i].curr_pose.x); //angle between horizontal and the rect connect i and j
 		    double theta = public_robots[i].curr_pose.theta; //current orientation of i
-		    double alpha= M_PI/5; //half vision angle    
+		    double alpha= M_PI/6; //half vision angle    
 		    double angle = fabs(fmod(theta - gamma, 2*M_PI)); 
 		    
 		    double dist = sqrt(pow(public_robots[i].curr_pose.x - public_robots[j].curr_pose.x,2) + pow(public_robots[i].curr_pose.y - public_robots[j].curr_pose.y,2)); //distance between i and j
 		    
-		    if(special_sin(public_robots[i].err_ang) > 0.05)
+		    if(angle < alpha) //j is in the vision range of i
 		    {
-			matrix.at(n + i).at(n + j) = state_transition::rot_only;
-		    }
-		    else if(angle < alpha) //j is in the vision range of i
-		    {
-			if(dist >= 8 && dist < 20)
+			if(dist >= 6 && dist < 15)
 			{
-			    matrix.at(n + i).at(n + j) = state_transition::near_car;
+			    if(public_robots[i].ref_node[0] == public_robots[j].ref_node[0] &&
+			    fabs(public_robots[i].curr_pose.theta - public_robots[j].curr_pose.theta) < 0.523)
+				matrix.at(n + i).at(n + j) = state_transition::near_car;
+			    else
+				matrix.at(n + i).at(n + j) = state_transition::road_free;
 			}
 			
-			if(dist < 8)
+			else if(dist < 6)
 			{
 			    matrix.at(n + i).at(n + j) = state_transition::stop_now;
+			    ROS_INFO_STREAM("robot"<< public_robots[i].id << "STOP " << __LINE__);
 			    
-			    if(public_robots[i].id > public_robots[j].id && dist > 2) 
+			    if(public_robots[i].id > public_robots[j].id ) 
 				matrix.at(n + i).at(n + j) = state_transition::road_free;
-			    if(public_robots[i].id > public_robots[j].id && dist < 2)
+			    if(public_robots[i].id > public_robots[j].id  && public_robots[i].ref_node[0] == public_robots[j].ref_node[0] &&
+				fabs(public_robots[i].curr_pose.theta - public_robots[j].curr_pose.theta) < 0.523)
+			    { 
 				matrix.at(n + i).at(n + j) = state_transition::stop_now;
+				ROS_INFO_STREAM("robot"<< public_robots[i].id << "STOP " << __LINE__);
+			    }
+			}
+			else 
+			{
+			    if(special_sin(public_robots[i].err_ang) > 0.05)
+			    {
+				matrix.at(n + i).at(n + j) = state_transition::rot_only;
+			    }
+			    else 
+			    {
+				matrix.at(n + i).at(n + j) = state_transition::move_rot;
+			    }		    
 			}
 		    }
 		    else 
 		    {
+			if(special_sin(public_robots[i].err_ang) > 0.05)
+			{
+			matrix.at(n + i).at(n + j) = state_transition::rot_only;
+			}
+			else 
+			{
 			matrix.at(n + i).at(n + j) = state_transition::move_rot;
+			}		    
 		    }
 	
 		  }
@@ -995,7 +1164,6 @@ void pisa_prova::run()
 	    
 // 	    if(robots[i].robot_state != robots[i].prev_state)
 // 	    robots[i].prev_state = robots[i].robot_state;
-	    	    	    
 	    ros::spinOnce();   
 	}
 	    
