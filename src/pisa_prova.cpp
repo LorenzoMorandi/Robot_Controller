@@ -733,7 +733,7 @@ void pisa_prova::run()
 		    }
 		    else
 		    {
-			if(special_sin(robots[i].err_ang) > 0.05)
+			if(special_sin(robots[i].err_ang) > 0.03)
 			{
 			    matrix.at(i).at(n + k) = state_transition::rot_only;
 			}
@@ -745,7 +745,7 @@ void pisa_prova::run()
 		}  
 		else
 		{
-		    if(special_sin(robots[i].err_ang) > 0.05)
+		    if(special_sin(robots[i].err_ang) > 0.03)
 		    {
 			matrix.at(i).at(n + k) = state_transition::rot_only;
 		    }
@@ -761,7 +761,7 @@ void pisa_prova::run()
 	    {
 		if(n==1)
 		{
-		    if(special_sin(robots[i].err_ang) > 0.05)
+		    if(special_sin(robots[i].err_ang) > 0.03)
 		    {
 			matrix.at(i).at(j) = state_transition::rot_only;
 		    }
@@ -808,7 +808,7 @@ void pisa_prova::run()
 			}
 			else
 			{
-			    if(special_sin(robots[i].err_ang) > 0.05)
+			    if(special_sin(robots[i].err_ang) > 0.03)
 			    {
 				matrix.at(i).at(j) = state_transition::rot_only;
 			    }	
@@ -820,7 +820,7 @@ void pisa_prova::run()
 		    }
 		    else
 		    {
-			if(special_sin(robots[i].err_ang) > 0.05)
+			if(special_sin(robots[i].err_ang) > 0.03)
 			{
 			    matrix.at(i).at(j) = state_transition::rot_only;
 			}	
@@ -833,7 +833,7 @@ void pisa_prova::run()
 		}
 	    }
 	    
-	    if(robots[i].err_lin < 10 && robots[i].ref.size() == 1) //DELETE ROBOT
+	    if(robots[i].err_lin < 20 && robots[i].ref.size() == 1) //DELETE ROBOT
 	    {
 		stdr_robot::HandleRobot handler;
 		std::string name("robot" + std::to_string(robots[i].id));
@@ -967,7 +967,7 @@ void pisa_prova::run()
 		    }
 		    else
 		    {
-			if(special_sin(public_robots[i].err_ang) > 0.05)
+			if(special_sin(public_robots[i].err_ang) > 0.03)
 			{
 			    matrix.at(n + i).at(k) = state_transition::rot_only;
 			}
@@ -979,7 +979,7 @@ void pisa_prova::run()
 		}  
 		else
 		{
-			if(special_sin(public_robots[i].err_ang) > 0.05)
+			if(special_sin(public_robots[i].err_ang) > 0.03)
 			{
 			    matrix.at(n + i).at(k) = state_transition::rot_only;
 			}
@@ -995,7 +995,7 @@ void pisa_prova::run()
 	    {
 		if(public_n == 1)
 		{
-		    if(special_sin(public_robots[i].err_ang) > 0.05)
+		    if(special_sin(public_robots[i].err_ang) > 0.03)
 		    {
 			matrix.at(n + i).at(n + j) = state_transition::rot_only;
 		    }
@@ -1041,7 +1041,7 @@ void pisa_prova::run()
 			}
 			else 
 			{
-			    if(special_sin(public_robots[i].err_ang) > 0.05)
+			    if(special_sin(public_robots[i].err_ang) > 0.03)
 			    {
 				matrix.at(n + i).at(n + j) = state_transition::rot_only;
 			    }
@@ -1053,7 +1053,7 @@ void pisa_prova::run()
 		    }
 		    else 
 		    {
-			if(special_sin(public_robots[i].err_ang) > 0.05)
+			if(special_sin(public_robots[i].err_ang) > 0.03)
 			{
 			matrix.at(n + i).at(n + j) = state_transition::rot_only;
 			}
@@ -1066,7 +1066,7 @@ void pisa_prova::run()
 		  }
 	    }
 	    
-	    if(public_robots[i].err_lin < 10 && public_robots[i].ref.size() == 1) //DELETE ROBOT
+	    if(public_robots[i].err_lin < 20 && public_robots[i].ref.size() == 1) //DELETE ROBOT
 	    {
 		stdr_robot::HandleRobot handler;
 		std::string name("robot" + std::to_string(public_robots[i].id));
