@@ -9,6 +9,11 @@ pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coor
     {
 	node.push_back(i);
     }
+    node.erase(node.begin()+682);
+    node.erase(node.begin()+164);
+    node.erase(node.begin()+195);
+    node.erase(node.begin()+104);
+    node.erase(node.begin()+662);
 }
 
 pisa_prova::~pisa_prova() //Desctructor
@@ -413,10 +418,17 @@ void pisa_prova::spawnPublicRobot()
     stdr_robot::HandleRobot handler;
     std::srand(std::time(0));
     
-    for(int i=0; i < public_n; i++)
-    {
-	public_random_start_node.push_back(g.nodeFromId(random_generator(node))); 
-    }
+    //FIRST GOAL PUBLIC ROBOT 1
+    public_start_node.push_back(g.nodeFromId(682)); 
+    //FIRST GOAL PUBLIC ROBOT 2
+    public_start_node.push_back(g.nodeFromId(164)); 
+    //FIRST GOAL PUBLIC ROBOT 3
+    public_start_node.push_back(g.nodeFromId(104)); 
+    //FIRST GOAL PUBLIC ROBOT 4
+    public_start_node.push_back(g.nodeFromId(195)); 
+    //FIRST GOAL PUBLIC ROBOT 5
+    public_start_node.push_back(g.nodeFromId(662)); 
+
     
     if(ros::ok())
     {
@@ -433,11 +445,11 @@ void pisa_prova::spawnPublicRobot()
 	    exit(1);
 	}
 	
-	for(int i = 0; i < public_random_start_node.size(); i++)
+	for(int i = 0; i < public_start_node.size(); i++)
 	{
 	    double random_variable = std::rand()%7 +0.2 -M_PI;
-	    msg.initialPose.x = coord_x[public_random_start_node[i]]; 
-	    msg.initialPose.y = coord_y[public_random_start_node[i]]; 
+	    msg.initialPose.x = coord_x[public_start_node[i]]; 
+	    msg.initialPose.y = coord_y[public_start_node[i]]; 
 	    msg.initialPose.theta = 0; 
 	    msg.robot_type = 1;
 	
@@ -501,6 +513,7 @@ void pisa_prova::initRobot()
 	tmp.transition = "road_free";
 	tmp.id = i;
 	tmp.public_robot = 1;
+	tmp.bus_stop_counter = 1;
 	public_robots.push_back(tmp);
 	
 	ros::Publisher tmp_pub;
@@ -511,7 +524,37 @@ void pisa_prova::initRobot()
 // 	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
 // 	controller_pubs.push_back(tmp_pub);
     }
+    
+    //RECURSIVE GOAL PUBLIC ROBOT 1
+    public_robots[0].goal_node.push_back(g.nodeFromId(682));
+    public_robots[0].goal_node.push_back(g.nodeFromId(130));
+    public_robots[0].goal_node.push_back(g.nodeFromId(673));
+    public_robots[0].goal_node.push_back(g.nodeFromId(686));
+    
+    //RECURSIVE GOAL PUBLIC ROBOT 2
+    public_robots[1].goal_node.push_back(g.nodeFromId(164));
+    public_robots[1].goal_node.push_back(g.nodeFromId(241));
+    public_robots[1].goal_node.push_back(g.nodeFromId(255));
+    public_robots[1].goal_node.push_back(g.nodeFromId(187));
 
+    //RECURSIVE GOAL PUBLIC ROBOT 3
+    public_robots[2].goal_node.push_back(g.nodeFromId(104));
+    public_robots[2].goal_node.push_back(g.nodeFromId(671));
+    public_robots[2].goal_node.push_back(g.nodeFromId(689));
+    public_robots[2].goal_node.push_back(g.nodeFromId(226));
+    
+    //RECURSIVE GOAL PUBLIC ROBOT 4
+    public_robots[3].goal_node.push_back(g.nodeFromId(195));
+    public_robots[3].goal_node.push_back(g.nodeFromId(29));
+    public_robots[3].goal_node.push_back(g.nodeFromId(213));
+    
+    //RECURSIVE GOAL PUBLIC ROBOT 5
+    public_robots[4].goal_node.push_back(g.nodeFromId(662));
+    public_robots[4].goal_node.push_back(g.nodeFromId(687));
+    public_robots[4].goal_node.push_back(g.nodeFromId(479));
+    public_robots[4].goal_node.push_back(g.nodeFromId(250));
+
+   
     ReadPoses();
     
     ROS_INFO_STREAM("INITIALIZATION OK");   
@@ -573,7 +616,7 @@ void pisa_prova::computePublicPath()
 {    
     for(int i=0; i < public_n; i++)
     {
-	public_random_goal_node.push_back(g.nodeFromId(random_generator(node))); 
+	public_goal_node.push_back(public_robots[i].goal_node[public_robots[i].bus_stop_counter]); 
     }
 
 //     for(int i = 0; i < public_n; i++)
@@ -581,17 +624,17 @@ void pisa_prova::computePublicPath()
 // 	ROS_WARN_STREAM("Initial Node ID robot " << i << ": "<< g.id(public_random_start_node.at(i)) << " ----> Goal Node ID robot " << i << ": " << g.id(random_goal_node.at(i)));
 //     }
    
-    for (int i = 0; i < public_random_start_node.size(); i++) 
+    for (int i = 0; i < public_start_node.size(); i++) 
     {
 	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
 	    
-	dijkstra_test.run(public_random_start_node.at(i), public_random_goal_node.at(i));
+	dijkstra_test.run(public_start_node.at(i), public_goal_node.at(i));
 	
 // 	std::cout << "PATH Robot" << i << ": ";
 	   
-	if (dijkstra_test.dist(public_random_goal_node.at(i)) > 0)
+	if (dijkstra_test.dist(public_goal_node.at(i)) > 0)
 	{   
-	    for (Node v = public_random_goal_node.at(i); v != public_random_start_node.at(i); v = dijkstra_test.predNode(v)) 
+	    for (Node v = public_goal_node.at(i); v != public_start_node.at(i); v = dijkstra_test.predNode(v)) 
 	    {
 		geometry_msgs::Pose2D tmp;
 		tmp.y = coord_y[v];
@@ -613,8 +656,7 @@ void pisa_prova::computePublicPath()
 	    tmp.y = public_robots[i].curr_pose.y;	    
 	    public_robots[i].ref.push_back(tmp); 
 	}
-
-	public_robots[i].prev_ref_node = public_random_start_node[i];
+	public_robots[i].prev_ref_node = public_start_node[i];
     }
     
     ROS_INFO_STREAM("PUBLIC PATH COMPUTED");
@@ -625,13 +667,13 @@ void pisa_prova::init()
     ROS_INFO_STREAM("START");
     
     pnh.param<int>("robot_number", n, 3);
-    public_n = n;
+    public_n = 5;
     ROS_INFO_STREAM("Robot Number: " << n + public_n);
     
     //********************* LOAD GRAPH **********************//
     
     loadGraph();
-       
+           
     //********************* SPAWN ROBOTS **********************//
     
     spawnRobot();
@@ -639,7 +681,7 @@ void pisa_prova::init()
     //********************* SPAWN PUBLIC ROBOTS **********************//
 
     spawnPublicRobot();
-
+    
     //*********************INITIALIZATION**********************//
     
     initRobot();
@@ -1066,27 +1108,54 @@ void pisa_prova::run()
 		  }
 	    }
 	    
-	    if(public_robots[i].err_lin < 20 && public_robots[i].ref.size() == 1) //DELETE ROBOT
-	    {
-		stdr_robot::HandleRobot handler;
-		std::string name("robot" + std::to_string(public_robots[i].id));
-		try
-		{    
-		    if (handler.deleteRobot(name))
+	    if(public_robots[i].err_lin < 1 && public_robots[i].ref.size() == 1) //CHANGE ROBOT BUS STOP
+	    {		
+		matrix.at(n + i).at(n + i) = state_transition::near_car;
+		
+		public_start_node[i] = public_robots[i].prev_ref_node;	//INSERISCO IL NUOVO START NEL VETTORE DEI START PUBBLICI
+		
+		public_robots[i].ref.erase(public_robots[i].ref.begin()+0);	//SVUOTO IL VETTORE DEI RIFERIMENTI
+
+		public_robots[i].bus_stop_counter ++;				//INCREMENTO IL CONTATORE PER PUNTARE AL SUCCESSIVO GOAL
+		
+		if(public_robots[i].bus_stop_counter == public_robots[i].goal_node.size())	//CONTROLLO SE IL CONTATORE HA SFORATO LA LUNGHEZZA DEL VETTORE
+		    public_robots[i].bus_stop_counter = 0;			//RESETTO IL CONTATORE (RIPARTO DALLA PRIMA FERMATA)
+		    
+		public_goal_node[i] = public_robots[i].goal_node[public_robots[i].bus_stop_counter];	//INSERISCO IL NUOVO GOAL NEL VETTORE DEI GOAL PUBBLICI
+
+		ROS_WARN_STREAM("Robot"<< public_robots[i].id << "PATH RE-CALCULATION");
+
+		Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+	    
+		dijkstra_test.run(public_start_node.at(i), public_goal_node.at(i));
+		
+	// 	std::cout << "PATH Robot" << i << ": ";
+		
+		if (dijkstra_test.dist(public_goal_node.at(i)) > 0)
+		{   
+		    for (Node v = public_goal_node.at(i); v != public_start_node.at(i); v = dijkstra_test.predNode(v)) 
 		    {
-			ROS_INFO("Robot %s deleted successfully", name.c_str());
+			geometry_msgs::Pose2D tmp;
+			tmp.y = coord_y[v];
+			tmp.x = coord_x[v];
+			
+			public_robots[i].ref.push_back(tmp);
+			public_robots[i].ref_node.push_back(v);
+			
+	// 		std::cout << g.id(v) << " <- ";
 		    }
-		    else 
-		    {
-			ROS_ERROR("Could not delete robot %s", name.c_str());
-		    }
+	// 	    std::cout << g.id(public_random_start_node.at(i))<< std::endl;
+		    std::reverse(public_robots[i].ref.begin(),public_robots[i].ref.end());
+		    std::reverse(public_robots[i].ref_node.begin(),public_robots[i].ref_node.end());
 		}
-		catch (stdr_robot::ConnectionException& ex) 
+		else
 		{
-		    ROS_ERROR("%s", ex.what());
+		    geometry_msgs::Pose2D tmp;
+		    tmp.x = public_robots[i].curr_pose.x;
+		    tmp.y = public_robots[i].curr_pose.y;	    
+		    public_robots[i].ref.push_back(tmp); 
 		}
-		public_robots.erase(public_robots.begin() + i);
-		public_n--;
+		public_robots[i].prev_ref_node = public_start_node[i];
 	    }
 	}
 	

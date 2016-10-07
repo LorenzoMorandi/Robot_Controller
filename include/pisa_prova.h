@@ -50,6 +50,7 @@ struct Robot
     geometry_msgs::Pose2D curr_pose;
     std::vector<geometry_msgs::Pose2D> ref;
     std::vector<Node> ref_node;
+    std::vector<Node> goal_node;
     Node prev_ref_node;
     double err_ang;
     double err_lin;
@@ -60,6 +61,7 @@ struct Robot
     int id;
     int prev_value;
     bool public_robot;
+    int bus_stop_counter;
 };
 
 class pisa_prova
@@ -84,8 +86,8 @@ public:
     std::vector<int> node;
     std::vector<Node> random_start_node;
     std::vector<Node> random_goal_node;
-    std::vector<Node> public_random_start_node;
-    std::vector<Node> public_random_goal_node;
+    std::vector<Node> public_start_node;
+    std::vector<Node> public_goal_node;
 
 //     typedef SmartDigraph::NodeMap<int> IdMap;
     
