@@ -67,6 +67,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
    FILES
    robot.msg
+   call.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -149,6 +150,7 @@ include_directories( ${catkin_INCLUDE_DIRS} )
 add_executable(supervisor_cross src/supervisor_cross_main.cpp src/supervisor_cross.cpp)
 add_executable(supervisor_multi_cross src/supervisor_multi_cross_main.cpp src/supervisor_multi_cross.cpp)
 add_executable(pisa_prova src/pisa_prova_main.cpp src/pisa_prova.cpp)
+add_executable(bus_call src/bus_call.cpp)
 #add_executable(public_traffic src/public_traffic_main.cpp src/public_traffic.cpp src/pisa_prova.cpp)
 
 
@@ -160,6 +162,7 @@ add_executable(pisa_prova src/pisa_prova_main.cpp src/pisa_prova.cpp)
 target_link_libraries(supervisor_cross ${catkin_LIBRARIES})
 target_link_libraries(supervisor_multi_cross ${catkin_LIBRARIES})
 target_link_libraries(pisa_prova ${catkin_LIBRARIES})
+target_link_libraries(bus_call ${catkin_LIBRARIES})
 #target_link_libraries(public_traffic ${catkin_LIBRARIES})
 
 

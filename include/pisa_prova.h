@@ -82,6 +82,9 @@ public:
     int number;
     int var=0;
     double middleweight;
+    double robot_length;
+    double v_max;
+    double k;
 
     std::vector<int> node;
     std::vector<Node> random_start_node;

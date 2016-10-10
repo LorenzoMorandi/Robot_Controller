@@ -5,6 +5,9 @@ pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coor
     n = 0;
     number = 0;
     middleweight  = 0.0;
+    robot_length = 2.0;
+    v_max = 30.0;
+    k = 500.0;
    
     for (int i = 0; i < 702; i++)
     {
@@ -354,7 +357,6 @@ void pisa_prova::loadGraph()
     }
        
     middleweight = middleweight/702;
-    ROS_INFO_STREAM("middleweight= "<< middleweight);
     
     ROS_INFO_STREAM("GRAPH LOADED");
 }
@@ -672,6 +674,8 @@ void pisa_prova::init()
     public_n = 5;
     ROS_INFO_STREAM("Robot Number: " << n + public_n);
     
+    ROS_INFO_STREAM("K: " << (k*robot_length/v_max));
+    
     //********************* LOAD GRAPH **********************//
     
     loadGraph();
@@ -735,7 +739,7 @@ void pisa_prova::run()
 // 			    ROS_INFO_STREAM("Robot " << robots[i].id << " su arco " << g.id(a));
 // 			}
 // 			robots[i].prev_value = g.id(a);
-			len[a]+= middleweight;
+			len[a]+= (k*robot_length/v_max);
 // 		    }
 		}
 	    }
@@ -959,7 +963,7 @@ void pisa_prova::run()
 // 			    ROS_INFO_STREAM("Robot " << robots[i].id << " su arco " << g.id(a));
 // 			}
 // 			robots[i].prev_value = g.id(a);
-			len[a]+= middleweight;
+			len[a]+= (k*robot_length/v_max);
 // 		    }
 		}
 	    }
