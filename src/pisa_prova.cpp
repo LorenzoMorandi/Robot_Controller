@@ -4,6 +4,7 @@ pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coor
 {
     n = 0;
     number = 0;
+    middleweight  = 0.0;
    
     for (int i = 0; i < 702; i++)
     {
@@ -351,8 +352,9 @@ void pisa_prova::loadGraph()
 	init_len[a] = distance;
 	middleweight+= distance;
     }
-        
+       
     middleweight = middleweight/702;
+    ROS_INFO_STREAM("middleweight= "<< middleweight);
     
     ROS_INFO_STREAM("GRAPH LOADED");
 }
@@ -390,7 +392,7 @@ void pisa_prova::spawnRobot()
 	    msg.initialPose.x = coord_x[random_start_node[i]]; 
 	    msg.initialPose.y = coord_y[random_start_node[i]]; 
 	    msg.initialPose.theta = 0; 
-	    msg.robot_type = 0;
+	    msg.robot_type = 10;
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
 	
@@ -433,7 +435,7 @@ void pisa_prova::spawnPublicRobot()
     if(ros::ok())
     {
 	stdr_msgs::RobotMsg msg;
-	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/simple_robot.xml";
+	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/simple_public_robot.xml";
 		
 	try 
 	{
@@ -451,7 +453,7 @@ void pisa_prova::spawnPublicRobot()
 	    msg.initialPose.x = coord_x[public_start_node[i]]; 
 	    msg.initialPose.y = coord_y[public_start_node[i]]; 
 	    msg.initialPose.theta = 0; 
-	    msg.robot_type = 1;
+	    msg.robot_type = i;
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
 	
@@ -512,7 +514,7 @@ void pisa_prova::initRobot()
 	tmp.prev_state = 3;
 	tmp.transition = "road_free";
 	tmp.id = i;
-	tmp.public_robot = 1;
+	tmp.public_robot = i - n;
 	tmp.bus_stop_counter = 1;
 	public_robots.push_back(tmp);
 	
@@ -961,7 +963,7 @@ void pisa_prova::run()
 // 		    }
 		}
 	    }
-// 	    
+	    
 	    double fx = LinearErrX(public_robots[i].curr_pose, public_robots[i].ref);
 	    double fy = LinearErrY(public_robots[i].curr_pose, public_robots[i].ref);
 	    
@@ -1110,7 +1112,7 @@ void pisa_prova::run()
 	    
 	    if(public_robots[i].err_lin < 1 && public_robots[i].ref.size() == 1) //CHANGE ROBOT BUS STOP
 	    {		
-		matrix.at(n + i).at(n + i) = state_transition::near_car;
+		matrix.at(n + i).at(n + i) = state_transition::road_free;
 		
 		public_start_node[i] = public_robots[i].prev_ref_node;	//INSERISCO IL NUOVO START NEL VETTORE DEI START PUBBLICI
 		
@@ -1133,6 +1135,7 @@ void pisa_prova::run()
 		
 		if (dijkstra_test.dist(public_goal_node.at(i)) > 0)
 		{   
+		    ROS_WARN_STREAM("Robot"<< public_robots[i].id << "DIJSTRA SOLVED");
 		    for (Node v = public_goal_node.at(i); v != public_start_node.at(i); v = dijkstra_test.predNode(v)) 
 		    {
 			geometry_msgs::Pose2D tmp;
@@ -1150,6 +1153,7 @@ void pisa_prova::run()
 		}
 		else
 		{
+		    ROS_WARN_STREAM("Robot"<< public_robots[i].id << "DIJSTRA NOT SOLVED");
 		    geometry_msgs::Pose2D tmp;
 		    tmp.x = public_robots[i].curr_pose.x;
 		    tmp.y = public_robots[i].curr_pose.y;	    

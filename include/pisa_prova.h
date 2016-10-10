@@ -60,7 +60,7 @@ struct Robot
     int prev_state;
     int id;
     int prev_value;
-    bool public_robot;
+    int public_robot;
     int bus_stop_counter;
 };
 
