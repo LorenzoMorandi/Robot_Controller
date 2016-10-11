@@ -8,7 +8,10 @@ pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coor
     robot_length = 2.0;
     v_max = 30.0;
     k = 500.0;
-   
+    called_node = 0;
+    
+    bus_call_sub = nh.subscribe("call", 1, &pisa_prova::busCallback, this);
+
     for (int i = 0; i < 702; i++)
     {
 	node.push_back(i);
@@ -24,6 +27,118 @@ pisa_prova::~pisa_prova() //Desctructor
 {
     
 }
+
+void pisa_prova::busCallback(const robot_controller::call& call)
+{
+    called_node = call.node;
+    ROS_WARN_STREAM("BUS CALL " << called_node);
+    
+    //READ THE BUS CALL	
+
+    bus_call = g.nodeFromId(called_node);
+    
+    geometry_msgs::Pose2D tmp;
+    tmp.x = coord_x[bus_call];
+    tmp.y = coord_y[bus_call];
+    
+    //DRAW THE CALL BUS POSITION
+    stdr_robot::HandleRobot handler;
+        
+    if(ros::ok())
+    {
+	stdr_msgs::RobotMsg msg;
+	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/call.xml";
+		
+	try 
+	{
+	    msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	}
+	catch(stdr_parser::ParserException& ex)
+	{
+	    ROS_ERROR("[STDR_PARSER] %s", ex.what());
+	    exit(1);
+	}
+	
+	double random_variable = std::rand()%7 +0.2 -M_PI;
+	msg.initialPose.x = coord_x[bus_call]; 
+	msg.initialPose.y = coord_y[bus_call]; 
+	msg.initialPose.theta = 0; 
+	msg.robot_type = 7;
+	msg.bus_stop = 1;
+	
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	
+	try 
+	{
+	    namedRobot = handler.spawnNewRobot(msg);
+	}
+	catch (stdr_robot::ConnectionException& ex) 
+	{
+	    ROS_ERROR("%s", ex.what());
+	    exit(1);
+	}
+	ros::spinOnce();
+    }
+    
+    ROS_INFO_STREAM("BUS CALL SPAWNED");
+    
+    
+    double dist = sqrt(pow(public_robots[0].curr_pose.x - tmp.x,2) + pow(public_robots[0].curr_pose.y - tmp.y,2)); 
+    int near_robot = 0;	    
+
+    for(int i = 1; i < public_n; i++)    
+    {
+	double tmp_dist = sqrt(pow(public_robots[i].curr_pose.x - tmp.x,2) + pow(public_robots[i].curr_pose.y - tmp.y,2)); 
+	if(tmp_dist < dist)
+	{
+	    dist = tmp_dist;
+	    near_robot = i;
+	}
+    }
+    ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " BUS CALL!!!");
+
+    public_start_node[near_robot] = public_robots[near_robot].prev_ref_node;
+    public_goal_node[near_robot] = bus_call;
+    
+    public_robots[near_robot].ref.clear();
+    
+    Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+    
+    dijkstra_test.run(public_start_node.at(near_robot), public_goal_node.at(near_robot));
+    
+// 	std::cout << "PATH Robot" << i << ": ";
+    
+    if (dijkstra_test.dist(public_goal_node.at(near_robot)) > 0)
+    {   
+	ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " DIJSTRA SOLVED");
+	for (Node v = public_goal_node.at(near_robot); v != public_start_node.at(near_robot); v = dijkstra_test.predNode(v)) 
+	{
+	    geometry_msgs::Pose2D tmp;
+	    tmp.y = coord_y[v];
+	    tmp.x = coord_x[v];
+	    
+	    public_robots[near_robot].ref.push_back(tmp);
+	    public_robots[near_robot].ref_node.push_back(v);
+	    
+// 		std::cout << g.id(v) << " <- ";
+	}
+// 	    std::cout << g.id(public_random_start_node.at(i))<< std::endl;
+	std::reverse(public_robots[near_robot].ref.begin(),public_robots[near_robot].ref.end());
+	std::reverse(public_robots[near_robot].ref_node.begin(),public_robots[near_robot].ref_node.end());
+    }
+    else
+    {
+	ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " DIJSTRA NOT SOLVED");
+	geometry_msgs::Pose2D tmp;
+	tmp.x = public_robots[near_robot].curr_pose.x;
+	tmp.y = public_robots[near_robot].curr_pose.y;	    
+	public_robots[near_robot].ref.push_back(tmp); 
+    }
+    public_robots[near_robot].prev_ref_node = public_start_node[near_robot];
+    
+    public_robots[near_robot].bus_stop_counter --;
+}
+
 
 void pisa_prova::ReadPoses() //Read from tf the robots position
 {
@@ -395,6 +510,7 @@ void pisa_prova::spawnRobot()
 	    msg.initialPose.y = coord_y[random_start_node[i]]; 
 	    msg.initialPose.theta = 0; 
 	    msg.robot_type = 10;
+	    msg.bus_stop = 0;
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
 	
@@ -456,6 +572,8 @@ void pisa_prova::spawnPublicRobot()
 	    msg.initialPose.y = coord_y[public_start_node[i]]; 
 	    msg.initialPose.theta = 0; 
 	    msg.robot_type = i;
+	    msg.bus_stop = 0;
+
 	
 	    stdr_msgs::RobotIndexedMsg namedRobot;
 	
@@ -666,6 +784,53 @@ void pisa_prova::computePublicPath()
     ROS_INFO_STREAM("PUBLIC PATH COMPUTED");
 }
 
+void pisa_prova::drawBusStop()
+{
+    stdr_robot::HandleRobot handler;
+
+    if(ros::ok())
+    {
+	stdr_msgs::RobotMsg msg;
+	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/call.xml";
+		
+	try 
+	{
+	    msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	}
+	catch(stdr_parser::ParserException& ex)
+	{
+	    ROS_ERROR("[STDR_PARSER] %s", ex.what());
+	    exit(1);
+	}
+	
+	for(int i = 0; i < public_robots.size(); i++)
+	{
+	    for(int j=0; j < public_robots[i].goal_node.size(); j++)
+	    {
+		double random_variable = std::rand()%7 +0.2 -M_PI;
+		msg.initialPose.x = coord_x[public_robots[i].goal_node[j]]; 
+		msg.initialPose.y = coord_y[public_robots[i].goal_node[j]]; 
+		msg.initialPose.theta = 0; 
+		msg.robot_type = i;
+		msg.bus_stop = 1;
+	    
+		stdr_msgs::RobotIndexedMsg namedRobot;
+	    
+		try 
+		{
+		    namedRobot = handler.spawnNewRobot(msg);
+		}
+		catch (stdr_robot::ConnectionException& ex) 
+		{
+		    ROS_ERROR("%s", ex.what());
+		    exit(1);
+		}
+	    }
+	}
+	ros::spinOnce();
+    }
+}
+
 void pisa_prova::init()
 {
     ROS_INFO_STREAM("START");
@@ -691,6 +856,10 @@ void pisa_prova::init()
     //*********************INITIALIZATION**********************//
     
     initRobot();
+    
+    //********************DRAW BUS STOP************************//
+    
+    drawBusStop();
 
     //********************* COMPUTE PATH **********************//
 
@@ -942,11 +1111,9 @@ void pisa_prova::run()
 		}
 	    }
 	}
+	     	
 	    
-// 	std::vector<state_transition> tmp1(public_n, state_transition::road_free);
-// 	std::vector<std::vector<state_transition>> public_matrix(public_n, tmp1);	//matrix nxn containing state transition info (i,j) e (j,i) 
-// 	
-	 // PUBLIC ROBOT CONTROLLER   
+	// PUBLIC ROBOT CONTROLLER   
 	for(int i = 0; i < public_n; i++)    
 	{
 	    // TRAFFIC CHECK

@@ -15,12 +15,14 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "bus_call");
     
-    std::vector<int> node;
     ros::NodeHandle n;
-    ros::Publisher bus_call;
+    ros::Publisher bus_call_pub;
+    
+    std::vector<int> node;
+
     int random;
        
-    bus_call = n.advertise<robot_controller::call>("call", 1); 
+    bus_call_pub = n.advertise<robot_controller::call>("call", 1); 
 
     for (int i = 0; i < 702; i++)
     {
@@ -38,7 +40,7 @@ int main(int argc, char **argv)
 	
 	ROS_WARN_STREAM("BUS CALL AT NODE: "<< random);
 	
-	bus_call.publish(msg);
+	bus_call_pub.publish(msg);
 	
 	ros::spinOnce();
 	loop_rate.sleep();

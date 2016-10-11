@@ -1,1 +1,1 @@
-int8 node
+int32 node

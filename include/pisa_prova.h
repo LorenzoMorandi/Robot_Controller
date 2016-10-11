@@ -29,6 +29,8 @@
 #include <cstdlib>
 #include <ctime>
 #include "robot_controller/robot.h"
+#include "robot_controller/call.h"
+
 
 using namespace lemon;
 using namespace std;
@@ -69,6 +71,7 @@ class pisa_prova
 public:
     ros::NodeHandle nh;
     ros::NodeHandle pnh;
+    ros::Subscriber bus_call_sub;
     
     std::vector<ros::Publisher> controller_pubs;
     std::vector<ros::Publisher> robot_pubs;
@@ -81,10 +84,12 @@ public:
     int public_n;
     int number;
     int var=0;
+    int called_node;
     double middleweight;
     double robot_length;
     double v_max;
     double k;
+    Node bus_call;
 
     std::vector<int> node;
     std::vector<Node> random_start_node;
@@ -117,6 +122,8 @@ public:
     void initRobot();
     void computePath();
     void computePublicPath();
+    void drawBusStop();
+    void busCallback(const robot_controller::call& call);
     
     pisa_prova();
     ~pisa_prova();
