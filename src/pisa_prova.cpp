@@ -3,12 +3,14 @@
 pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coords(g)  //Constructor
 {
     n = 0;
-    number = 0;
+    init_n = 0;
     middleweight  = 0.0;
     robot_length = 2.0;
     v_max = 30.0;
     k = 500.0;
     called_node = 0;
+
+    robot_pubs.resize(150);
     
     bus_call_sub = nh.subscribe("call", 1, &pisa_prova::busCallback, this);
 
@@ -42,46 +44,7 @@ void pisa_prova::busCallback(const robot_controller::call& call)
     tmp.y = coord_y[bus_call];
     
     //DRAW THE CALL BUS POSITION
-    stdr_robot::HandleRobot handler;
-        
-    if(ros::ok())
-    {
-	stdr_msgs::RobotMsg msg;
-	std::string robot_type = ros::package::getPath("robot_controller") + "/robots/call.xml";
-		
-	try 
-	{
-	    msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
-	}
-	catch(stdr_parser::ParserException& ex)
-	{
-	    ROS_ERROR("[STDR_PARSER] %s", ex.what());
-	    exit(1);
-	}
-	
-	double random_variable = std::rand()%7 +0.2 -M_PI;
-	msg.initialPose.x = coord_x[bus_call]; 
-	msg.initialPose.y = coord_y[bus_call]; 
-	msg.initialPose.theta = 0; 
-	msg.robot_type = 7;
-	msg.bus_stop = 1;
-	
-	    stdr_msgs::RobotIndexedMsg namedRobot;
-	
-	try 
-	{
-	    namedRobot = handler.spawnNewRobot(msg);
-	}
-	catch (stdr_robot::ConnectionException& ex) 
-	{
-	    ROS_ERROR("%s", ex.what());
-	    exit(1);
-	}
-	ros::spinOnce();
-    }
-    
-    ROS_INFO_STREAM("BUS CALL SPAWNED");
-    
+    stdr_robot::HandleRobot handler;    
     
     double dist = sqrt(pow(public_robots[0].curr_pose.x - tmp.x,2) + pow(public_robots[0].curr_pose.y - tmp.y,2)); 
     int near_robot = 0;	    
@@ -95,48 +58,97 @@ void pisa_prova::busCallback(const robot_controller::call& call)
 	    near_robot = i;
 	}
     }
-    ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " BUS CALL!!!");
-
-    public_start_node[near_robot] = public_robots[near_robot].prev_ref_node;
-    public_goal_node[near_robot] = bus_call;
     
-    public_robots[near_robot].ref.clear();
-    
-    Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
-    
-    dijkstra_test.run(public_start_node.at(near_robot), public_goal_node.at(near_robot));
-    
-// 	std::cout << "PATH Robot" << i << ": ";
-    
-    if (dijkstra_test.dist(public_goal_node.at(near_robot)) > 0)
-    {   
-	ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " DIJSTRA SOLVED");
-	for (Node v = public_goal_node.at(near_robot); v != public_start_node.at(near_robot); v = dijkstra_test.predNode(v)) 
-	{
-	    geometry_msgs::Pose2D tmp;
-	    tmp.y = coord_y[v];
-	    tmp.x = coord_x[v];
-	    
-	    public_robots[near_robot].ref.push_back(tmp);
-	    public_robots[near_robot].ref_node.push_back(v);
-	    
-// 		std::cout << g.id(v) << " <- ";
-	}
-// 	    std::cout << g.id(public_random_start_node.at(i))<< std::endl;
-	std::reverse(public_robots[near_robot].ref.begin(),public_robots[near_robot].ref.end());
-	std::reverse(public_robots[near_robot].ref_node.begin(),public_robots[near_robot].ref_node.end());
+    if(public_robots[near_robot].busy == 1)
+    {
+	ROS_INFO_STREAM("ROBOT "<< public_robots[near_robot].id <<" BUSY");
     }
     else
     {
-	ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " DIJSTRA NOT SOLVED");
-	geometry_msgs::Pose2D tmp;
-	tmp.x = public_robots[near_robot].curr_pose.x;
-	tmp.y = public_robots[near_robot].curr_pose.y;	    
-	public_robots[near_robot].ref.push_back(tmp); 
+	public_robots[near_robot].busy = 1; 	//ASSEGNO LO STATO OCCUPATO
+
+	if(ros::ok())
+	{
+	    stdr_msgs::RobotMsg msg;
+	    std::string robot_type = ros::package::getPath("robot_controller") + "/robots/call.xml";
+		    
+	    try 
+	    {
+		msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+	    }
+	    catch(stdr_parser::ParserException& ex)
+	    {
+		ROS_ERROR("[STDR_PARSER] %s", ex.what());
+		exit(1);
+	    }
+	    
+	    double random_variable = std::rand()%7 +0.2 -M_PI;
+	    msg.initialPose.x = coord_x[bus_call]; 
+	    msg.initialPose.y = coord_y[bus_call]; 
+	    msg.initialPose.theta = 0; 
+	    msg.robot_type = 7;
+	    msg.bus_stop = 1;
+	    
+	    stdr_msgs::RobotIndexedMsg namedRobot;
+	    
+	    try 
+	    {
+		namedRobot = handler.spawnNewRobot(msg);
+		public_robots[near_robot].bus_call_name = namedRobot.name;
+	    }
+	    catch (stdr_robot::ConnectionException& ex) 
+	    {
+		ROS_ERROR("%s", ex.what());
+		exit(1);
+	    }
+	    ros::spinOnce();
+	}
+	
+	ROS_INFO_STREAM("BUS CALL SPAWNED");
+	
+	ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " BUS CALL!!!");
+
+	public_start_node[near_robot] = public_robots[near_robot].prev_ref_node;
+	public_goal_node[near_robot] = bus_call;
+	
+	public_robots[near_robot].ref.clear();
+	
+	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+	
+	dijkstra_test.run(public_start_node.at(near_robot), public_goal_node.at(near_robot));
+	
+    // 	std::cout << "PATH Robot" << i << ": ";
+	
+	if (dijkstra_test.dist(public_goal_node.at(near_robot)) > 0)
+	{   
+	    ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " DIJSTRA SOLVED");
+	    for (Node v = public_goal_node.at(near_robot); v != public_start_node.at(near_robot); v = dijkstra_test.predNode(v)) 
+	    {
+		geometry_msgs::Pose2D tmp;
+		tmp.y = coord_y[v];
+		tmp.x = coord_x[v];
+		
+		public_robots[near_robot].ref.push_back(tmp);
+		public_robots[near_robot].ref_node.push_back(v);
+		
+    // 		std::cout << g.id(v) << " <- ";
+	    }
+    // 	    std::cout << g.id(public_random_start_node.at(i))<< std::endl;
+	    std::reverse(public_robots[near_robot].ref.begin(),public_robots[near_robot].ref.end());
+	    std::reverse(public_robots[near_robot].ref_node.begin(),public_robots[near_robot].ref_node.end());
+	}
+	else
+	{
+	    ROS_WARN_STREAM("Robot "<< public_robots[near_robot].id << " DIJSTRA NOT SOLVED");
+	    geometry_msgs::Pose2D tmp;
+	    tmp.x = public_robots[near_robot].curr_pose.x;
+	    tmp.y = public_robots[near_robot].curr_pose.y;	    
+	    public_robots[near_robot].ref.push_back(tmp); 
+	}
+	public_robots[near_robot].prev_ref_node = public_start_node[near_robot];
+	
+	public_robots[near_robot].bus_stop_counter --;
     }
-    public_robots[near_robot].prev_ref_node = public_start_node[near_robot];
-    
-    public_robots[near_robot].bus_stop_counter --;
 }
 
 
@@ -617,7 +629,7 @@ void pisa_prova::initRobot()
 	ros::Publisher tmp_pub;
 	tmp_pub = nh.advertise<robot_controller::robot>(tmp.robot_name + "/state", 1); 
 		
-	robot_pubs.push_back(tmp_pub);
+	robot_pubs.at(tmp.id) = tmp_pub;
 
 // 	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
 // 	controller_pubs.push_back(tmp_pub);
@@ -641,7 +653,7 @@ void pisa_prova::initRobot()
 	ros::Publisher tmp_pub;
 	tmp_pub = nh.advertise<robot_controller::robot>(tmp.robot_name + "/state", 1); 
 		
-	robot_pubs.push_back(tmp_pub);
+	robot_pubs.at(tmp.id) = tmp_pub;
 
 // 	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
 // 	controller_pubs.push_back(tmp_pub);
@@ -835,8 +847,10 @@ void pisa_prova::init()
 {
     ROS_INFO_STREAM("START");
     
-    pnh.param<int>("robot_number", n, 3);
+    pnh.param<int>("robot_number", n, 30);
+    init_n = n;
     public_n = 5;
+    
     ROS_INFO_STREAM("Robot Number: " << n + public_n);
     
     ROS_INFO_STREAM("K: " << (k*robot_length/v_max));
@@ -1073,6 +1087,135 @@ void pisa_prova::run()
 		n--;
 	    }
 	}
+	
+// 	if(n < (init_n/2) || n == 0)
+// 	{
+// 	    int new_robot = 4;
+// 	    //*********************SPAWN NEW ROBOTS**********************//
+// 	    
+// 	    stdr_robot::HandleRobot handler;
+// 	    
+// 	    for(int i = 0; i < new_robot; i++)
+// 	    {
+// 		random_start_node.push_back(g.nodeFromId(random_generator(node))); 
+// 	    }
+// 	    
+// 	    if(ros::ok())
+// 	    {
+// 		stdr_msgs::RobotMsg msg;
+// 		std::string robot_type = ros::package::getPath("robot_controller") + "/robots/simple_robot.xml";
+// 		try 
+// 		{
+// 		    msg = stdr_parser::Parser::createMessage<stdr_msgs::RobotMsg>(robot_type);
+// 		}
+// 		catch(stdr_parser::ParserException& ex)
+// 		{
+// 		    ROS_ERROR("[STDR_PARSER] %s", ex.what());
+// 		    exit(1);
+// 		}
+// 		
+// 		for(int i = 0; i < new_robot; i++)
+// 		{
+// 		    double random_variable = std::rand()%7 +0.2 -M_PI;
+// 		    msg.initialPose.x = coord_x[random_start_node[i]]; 
+// 		    msg.initialPose.y = coord_y[random_start_node[i]]; 
+// 		    msg.initialPose.theta = 0; 
+// 		    msg.robot_type = 10;
+// 		    msg.bus_stop = 0;
+// 		
+// 		    stdr_msgs::RobotIndexedMsg namedRobot;
+// 		
+// 		    try 
+// 		    {
+// 			namedRobot = handler.spawnNewRobot(msg);
+// 			ROS_INFO_STREAM("new "<< namedRobot.name << " spawned");
+// 		    }
+// 		    catch (stdr_robot::ConnectionException& ex) 
+// 		    {
+// 			ROS_ERROR("%s", ex.what());
+// 			exit(1);
+// 		    }
+// 		    
+// 		    //*********************INITIALIZATION**********************//
+// 		    
+// 		    Robot tmp;
+// 		    tmp.robot_name = namedRobot.name;
+// 		    tmp.err_ang = 0.0;
+// 		    tmp.err_lin = 0.0;
+// 		    tmp.state = state_machine_STATE::STOP;
+// 		    tmp.robot_state = 3;
+// 		    tmp.prev_state = 3;
+// 		    tmp.transition = "road_free";
+// 		    tmp.id = stoi(tmp.robot_name.substr(5));
+// 		    tmp.public_robot = 0;
+// 		    
+// 		    robots.push_back(tmp);
+// 		    
+// 		    new_id = tmp.id;
+// 		    
+// 		    ros::Publisher tmp_pub;
+// 		    tmp_pub = nh.advertise<robot_controller::robot>(tmp.robot_name + "/state", 1); 
+// 			    
+// 		    robot_pubs.at(tmp.id) = tmp_pub;
+// 
+// 		}
+// 		ros::spinOnce();
+// 	    }
+// 	    
+// 	    n += new_robot;
+// 	    			
+// 	    ROS_INFO_STREAM("NEW ROBOTS SPAWNED");
+// 	    ROS_INFO_STREAM("NEW Number of robots = " << n);
+// 
+// 	    for(int i = 0; i < new_robot; i++)
+// 	    {
+// 		random_goal_node.push_back(g.nodeFromId(random_generator(node))); 
+// 	    }
+// 
+// 	//     for(int i = 0; i < n; i++)
+// 	//     {
+// 	// 	ROS_WARN_STREAM("Initial Node ID robot " << i << ": "<< g.id(random_start_node.at(i)) << " ----> Goal Node ID robot " << i << ": " << g.id(random_goal_node.at(i)));
+// 	//     }
+// 	
+// 	    for (int i = (robots.size() - new_robot); i < robots.size(); i++) 
+// 	    {
+// 		Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+// 		    
+// 		dijkstra_test.run(random_start_node.at(i), random_goal_node.at(i));
+// 		
+// 		ROS_INFO_STREAM("Djikstra computed robot " << i;);
+// 		
+// 	// 	std::cout << "PATH Robot" << i << ": ";
+// 
+// 		if (dijkstra_test.dist(random_goal_node.at(i)) > 0)
+// 		{   
+// 		    for (Node v = random_goal_node.at(i); v != random_start_node.at(i); v = dijkstra_test.predNode(v)) 
+// 		    {
+// 			geometry_msgs::Pose2D tmp;
+// 			tmp.y = coord_y[v];
+// 			tmp.x = coord_x[v];	   
+// 			
+// 			robots[i].ref.push_back(tmp);
+// 			robots[i].ref_node.push_back(v);
+// 			
+// 	// 		std::cout << g.id(v) << " <- ";
+// 		    }
+// 		    ROS_INFO_STREAM("Path assign robot " << i);
+// 	// 	    std::cout << g.id(random_start_node.at(i))<< std::endl;
+// 		    std::reverse(robots[i].ref.begin(),robots[i].ref.end());
+// 		    std::reverse(robots[i].ref_node.begin(),robots[i].ref_node.end());
+// 		}
+// 		else
+// 		{
+// 		    ROS_INFO_STREAM("ERROR PATH");
+// 		    geometry_msgs::Pose2D tmp;
+// 		    tmp.x = robots[i].curr_pose.x;
+// 		    tmp.y = robots[i].curr_pose.y;	    
+// 		    robots[i].ref.push_back(tmp); 
+// 		}
+// 		robots[i].prev_ref_node = random_start_node[i];
+// 	    }
+// 	}
 		
 	// PRIVATE GET MAX  			
 	for(int i = 0; i < n; i++)
@@ -1282,7 +1425,29 @@ void pisa_prova::run()
 	    }
 	    
 	    if(public_robots[i].err_lin < 1 && public_robots[i].ref.size() == 1) //CHANGE ROBOT BUS STOP
-	    {		
+	    {	
+		if(public_robots[i].busy == 1)
+		{
+		    stdr_robot::HandleRobot handler;
+		    try
+		    {    
+			if (handler.deleteRobot(public_robots[i].bus_call_name))
+			{
+			    ROS_INFO("BUS CALL %s served ", public_robots[i].bus_call_name.c_str());
+			}
+			else 
+			{
+			    ROS_ERROR("Could not delete bus call %s ", public_robots[i].bus_call_name.c_str());
+			}
+		    }
+		    catch (stdr_robot::ConnectionException& ex) 
+		    {
+			ROS_ERROR("%s", ex.what());
+		    }
+		}
+		
+		public_robots[i].busy = 0;				//ROBOT E' LIBERO DI RICEVERE CHIAMATE
+		
 		matrix.at(n + i).at(n + i) = state_transition::road_free;
 		
 		public_start_node[i] = public_robots[i].prev_ref_node;	//INSERISCO IL NUOVO START NEL VETTORE DEI START PUBBLICI

@@ -13,6 +13,7 @@
 #include "math.h"
 #include <sstream>
 #include <iostream>
+#include <string>
 #include <random>
 #include <vector>
 #include <algorithm>
@@ -64,6 +65,8 @@ struct Robot
     int prev_value;
     int public_robot;
     int bus_stop_counter;
+    bool busy;
+    std::string bus_call_name;
 };
 
 class pisa_prova
@@ -81,8 +84,8 @@ public:
     tf::TransformListener listener;
     
     int n;
+    int init_n;
     int public_n;
-    int number;
     int var=0;
     int called_node;
     double middleweight;
@@ -90,6 +93,7 @@ public:
     double v_max;
     double k;
     Node bus_call;
+    int new_id;
 
     std::vector<int> node;
     std::vector<Node> random_start_node;
