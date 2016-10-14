@@ -1546,7 +1546,7 @@ void pisa_prova::run()
 	    msg1.err_ang = robots[i].err_ang;
 	    msg1.robot_state = robots[i].robot_state;
 	    msg1.id = robots[i].id;
-	    msg1.n = n + public_n;
+	    msg1.n = n + public_n + 25;
 	    
 	    robot_pubs[robots[i].id].publish(msg1);
 	    
@@ -1566,7 +1566,7 @@ void pisa_prova::run()
 	    msg1.err_ang = public_robots[i].err_ang;
 	    msg1.robot_state = public_robots[i].robot_state;
 	    msg1.id = public_robots[i].id;
-	    msg1.n = n + public_n;
+	    msg1.n = n + public_n + 25;
 	    
 	    robot_pubs[public_robots[i].id].publish(msg1);
 	    
