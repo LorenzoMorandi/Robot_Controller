@@ -9,8 +9,6 @@ pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coor
     v_max = 30.0;
     k = 500.0;
     called_node = 0;
-
-    robot_pubs.resize(150);
     
     bus_call_sub = nh.subscribe("call", 1, &pisa_prova::busCallback, this);
 
@@ -46,12 +44,23 @@ void pisa_prova::busCallback(const robot_controller::call& call)
     //DRAW THE CALL BUS POSITION
     stdr_robot::HandleRobot handler;    
     
-    double dist = sqrt(pow(public_robots[0].curr_pose.x - tmp.x,2) + pow(public_robots[0].curr_pose.y - tmp.y,2)); 
+    Dijkstra<Graph, LengthMap> dijkstra_test(g,len);
+    
+    dijkstra_test.run(public_robots[0].prev_ref_node, bus_call);
+    
+    double dist = dijkstra_test.dist(bus_call); 
+    ROS_WARN_STREAM("Distanza robot 0 e bus call = "<< dist);
     int near_robot = 0;	    
 
     for(int i = 1; i < public_n; i++)    
     {
-	double tmp_dist = sqrt(pow(public_robots[i].curr_pose.x - tmp.x,2) + pow(public_robots[i].curr_pose.y - tmp.y,2)); 
+	Dijkstra<Graph, LengthMap> dijkstra_test(g,len);    
+	dijkstra_test.run(public_robots[i].prev_ref_node, bus_call);
+	
+	double tmp_dist = dijkstra_test.dist(bus_call); 
+	
+	ROS_WARN_STREAM("Distanza robot "<< i <<" e bus call = "<< tmp_dist);
+	
 	if(tmp_dist < dist)
 	{
 	    dist = tmp_dist;
@@ -851,6 +860,8 @@ void pisa_prova::init()
     init_n = n;
     public_n = 5;
     
+    robot_pubs.resize(n + public_n + 25);
+    
     ROS_INFO_STREAM("Robot Number: " << n + public_n);
     
     ROS_INFO_STREAM("K: " << (k*robot_length/v_max));
@@ -893,10 +904,13 @@ void pisa_prova::run()
     
     while (ros::ok())
     {
-	if(n < (init_n/2) || n == 0)
+	if(n < (init_n/2))
 	{
 	    int new_robot = 4;
+	    n += new_robot;
 	    //*********************SPAWN NEW ROBOTS**********************//
+	    
+	    robot_pubs.resize(n + public_n + 25);
 	    
 	    stdr_robot::HandleRobot handler;
 	    
@@ -966,9 +980,7 @@ void pisa_prova::run()
 		}
 		ros::spinOnce();
 	    }
-	    
-	    n += new_robot;
-	    			
+	    	    			
 	    ROS_INFO_STREAM("NEW ROBOTS SPAWNED");
 	    ROS_INFO_STREAM("NEW Number of robots = " << n);
 
