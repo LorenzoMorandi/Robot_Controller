@@ -94,6 +94,7 @@ public:
     double k;
     Node bus_call;
     int new_id;
+    int bus_stop_reached;
 
     std::vector<int> node;
     std::vector<Node> random_start_node;

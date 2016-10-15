@@ -9,6 +9,7 @@ pisa_prova::pisa_prova():pnh("~"),len(g),init_len(g), coord_x(g),coord_y(g),coor
     v_max = 30.0;
     k = 500.0;
     called_node = 0;
+    bus_stop_reached = 0;
     
     bus_call_sub = nh.subscribe("call", 1, &pisa_prova::busCallback, this);
 
@@ -140,6 +141,20 @@ void pisa_prova::busCallback(const robot_controller::call& call)
 		public_robots[near_robot].ref.push_back(tmp);
 		public_robots[near_robot].ref_node.push_back(v);
 		
+		for(int j = 0; j < public_robots[near_robot].goal_node.size(); j++)
+		{
+		    double dist = sqrt(pow(coord_x[v] - coord_x[public_robots[near_robot].goal_node[j]],2) + 
+					pow(coord_y[v] - coord_y[public_robots[near_robot].goal_node[j]],2));
+		    
+		    if(dist < 20)
+		    {
+			bus_stop_reached ++;
+		    }
+		    else
+		    {
+			bus_stop_reached = bus_stop_reached;
+		    }
+		}
     // 		std::cout << g.id(v) << " <- ";
 	    }
     // 	    std::cout << g.id(public_random_start_node.at(i))<< std::endl;
@@ -154,9 +169,17 @@ void pisa_prova::busCallback(const robot_controller::call& call)
 	    tmp.y = public_robots[near_robot].curr_pose.y;	    
 	    public_robots[near_robot].ref.push_back(tmp); 
 	}
+	
 	public_robots[near_robot].prev_ref_node = public_start_node[near_robot];
 	
-	public_robots[near_robot].bus_stop_counter --;
+	if(bus_stop_reached > 0)
+	{   
+	    ROS_WARN_STREAM("BUS STOP IS IN THE PATH FOR REACH BUS CALL!");
+	}
+	else
+	{
+	    public_robots[near_robot].bus_stop_counter --;
+	}
     }
 }
 
