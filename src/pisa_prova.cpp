@@ -662,9 +662,6 @@ void pisa_prova::initRobot()
 	tmp_pub = nh.advertise<robot_controller::robot>(tmp.robot_name + "/state", 1); 
 		
 	robot_pubs.at(tmp.id) = tmp_pub;
-
-// 	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
-// 	controller_pubs.push_back(tmp_pub);
     }
     
     for (int i = n; i < n + public_n; i++)
@@ -686,9 +683,6 @@ void pisa_prova::initRobot()
 	tmp_pub = nh.advertise<robot_controller::robot>(tmp.robot_name + "/state", 1); 
 		
 	robot_pubs.at(tmp.id) = tmp_pub;
-
-// 	tmp_pub = nh.advertise<geometry_msgs::Twist>("/" + tmp.robot_name + "/cmd_vel", 100); 
-// 	controller_pubs.push_back(tmp_pub);
     }
     
     //RECURSIVE GOAL PUBLIC ROBOT 1
@@ -800,6 +794,8 @@ void pisa_prova::computePublicPath()
 	   
 	if (dijkstra_test.dist(public_goal_node.at(i)) > 0)
 	{   
+	    public_robots[i].travel_distance.push_back(dijkstra_test.dist(public_goal_node.at(i)));
+
 	    for (Node v = public_goal_node.at(i); v != public_start_node.at(i); v = dijkstra_test.predNode(v)) 
 	    {
 		geometry_msgs::Pose2D tmp;
@@ -924,6 +920,9 @@ void pisa_prova::run()
 {   
     ros::Rate loop_rate(30);
     ROS_INFO_STREAM("RUN CONTROL");
+    
+    init_time = ros::Time::now();
+    ROS_WARN_STREAM("Init time: "<< init_time);
     
     while (ros::ok())
     {
@@ -1460,6 +1459,31 @@ void pisa_prova::run()
 	    
 	    if(public_robots[i].err_lin < 1 && public_robots[i].ref.size() == 1) //CHANGE ROBOT BUS STOP
 	    {	
+		if(public_robots[i].busy == 0)
+		{
+		    double tmp = (ros::Time::now() - init_time).toSec();
+		    
+		    ROS_WARN_STREAM("Robot "<< public_robots[i].id << " travel time = "<< tmp);
+		    
+		    public_robots[i].travel_time.push_back(tmp);
+		    
+		    std::string name = std::to_string(public_robots[i].id);
+		    std::string robot_name = ("robot"+name+".txt");
+		    
+		    f = fopen(robot_name.c_str(), "w");
+		    
+		    ROS_WARN_STREAM("Ho aperto il file: robot"+name+".txt");
+		    fprintf(f, "%s\n", "travel_time	travel_distance");
+		    
+		    for(int k = 0; k < public_robots[i].travel_time.size(); k++)
+		    {			
+			fprintf(f, "%f\t%f", public_robots[i].travel_time[k], public_robots[i].travel_distance[k]);
+			fprintf(f, "\n");			
+		    }
+		    fclose(f);
+		    ROS_WARN_STREAM("Ho chiuso il file: robot"+name+".txt");
+		}
+		    
 		if(public_robots[i].busy == 1)
 		{
 		    stdr_robot::HandleRobot handler;
@@ -1505,6 +1529,8 @@ void pisa_prova::run()
 		
 		if (dijkstra_test.dist(public_goal_node.at(i)) > 0)
 		{   
+		    public_robots[i].travel_distance.push_back(dijkstra_test.dist(public_goal_node.at(i)));
+		    
 		    ROS_WARN_STREAM("Robot"<< public_robots[i].id << "DIJSTRA SOLVED");
 		    for (Node v = public_goal_node.at(i); v != public_start_node.at(i); v = dijkstra_test.predNode(v)) 
 		    {

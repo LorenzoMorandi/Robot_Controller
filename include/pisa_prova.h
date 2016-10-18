@@ -67,50 +67,64 @@ struct Robot
     int bus_stop_counter;
     bool busy;
     std::string bus_call_name;
+    std::vector<double> travel_time;
+    std::vector<double> travel_distance;
 };
 
 class pisa_prova
 {
 public:
+//---------Definizione dei Nodi--------------//
     ros::NodeHandle nh;
     ros::NodeHandle pnh;
+    
+//----------------Subscriber----------------//
     ros::Subscriber bus_call_sub;
     
-    std::vector<ros::Publisher> controller_pubs;
+//----------------Publisher----------------//
     std::vector<ros::Publisher> robot_pubs;
+
+//-----------Vector di robot--------------//
     std::vector<Robot> robots;
     std::vector<Robot> public_robots;
    
+//---------..--Lettore tf--------..------//
     tf::TransformListener listener;
     
+//------------Variabili Generiche--------//
     int n;
     int init_n;
     int public_n;
-    int var=0;
-    int called_node;
+    
+//---------Variabili per gestire l'incremento traffico --------------//
     double middleweight;
     double robot_length;
     double v_max;
     double k;
+    
+//---------Variabili per gestire le chiamate di autobus--------------//
     Node bus_call;
+    int called_node;
     int new_id;
     int bus_stop_reached;
-
+    
+//---------Variabili Temporali--------------//
+    FILE *f;
+    ros::Time init_time;
+//---------Vector di nodi -> arrivo e partenze--------------//
     std::vector<int> node;
     std::vector<Node> random_start_node;
     std::vector<Node> random_goal_node;
     std::vector<Node> public_start_node;
     std::vector<Node> public_goal_node;
 
-//     typedef SmartDigraph::NodeMap<int> IdMap;
-    
+//---------Variabili Del Grafo--------------//
     Graph g;
     LengthMap len;
     LengthMap init_len;
     CoordMap coord_x;
     CoordMap coord_y;
     SmartDigraph::NodeMap<Point> coords;
-//     IdMap id;
     
 public:
     void ReadPoses();
