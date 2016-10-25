@@ -69,6 +69,7 @@ struct Robot
     std::string bus_call_name;
     std::vector<double> travel_time;
     std::vector<double> travel_distance;
+    int stop;
 };
 
 class pisa_prova
@@ -95,6 +96,8 @@ public:
     int n;
     int init_n;
     int public_n;
+    int tmp_id;
+    int conta;
     
 //---------Variabili per gestire l'incremento traffico --------------//
     double middleweight;
@@ -113,6 +116,7 @@ public:
     ros::Time init_time;
 //---------Vector di nodi -> arrivo e partenze--------------//
     std::vector<int> node;
+    std::vector<int> node_test;
     std::vector<Node> random_start_node;
     std::vector<Node> random_goal_node;
     std::vector<Node> public_start_node;
